@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>buzzz. — {% if mode == 'signup' %}Create account{% else %}Sign in{% endif %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root {
+    --ink:      #1a1208;
+    --paper:    #faf6ef;
+    --amber:    #e8821a;
+    --amber2:   #f5a623;
+    --amber-dim:#7a4309;
+    --cream:    #f0e8d8;
+    --sage:     #3d5a47;
+    --coral:    #d45f3c;
+    --border:   #d4c4a8;
+    --text2:    #6b5a42;
+    --text3:    #9c8870;
+    --error:    #c0392b;
+    --success:  #27ae60;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper); color: var(--ink);
+  }
+
+  .page {
+    min-height: 100vh;
+    display: grid; grid-template-columns: 1fr 1.1fr;
+  }
+
+  /* ── LEFT DECORATIVE PANEL ── */
+  .deco-panel {
+    background: var(--ink);
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    padding: 44px 52px;
+    position: relative; overflow: hidden;
+  }
+
+  .deco-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 20% 80%, rgba(232,130,26,0.2) 0%, transparent 55%);
+    pointer-events: none;
+  }
+
+  .deco-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(232,130,26,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,130,26,0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none;
+  }
+
+  .deco-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; font-weight: 900; font-style: italic;
+    color: var(--paper); text-decoration: none;
+    position: relative; z-index: 1;
+  }
+  .deco-brand em { color: var(--amber); font-style: normal; }
+
+  .deco-center { position: relative; z-index: 1; }
+
+  .deco-quote {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 3.5vw, 44px);
+    font-weight: 700; line-height: 1.2;
+    color: var(--paper); margin-bottom: 24px;
+  }
+  .deco-quote em { font-style: italic; color: var(--amber); }
+
+  .deco-features { display: flex; flex-direction: column; gap: 16px; }
+
+  .deco-feat {
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .deco-feat-icon {
+    width: 38px; height: 38px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .deco-feat-icon.amber { background: rgba(232,130,26,0.2); color: var(--amber2); }
+  .deco-feat-icon.sage  { background: rgba(61,90,71,0.4);  color: #7abf8a; }
+  .deco-feat-icon.coral { background: rgba(212,95,60,0.2); color: #e89070; }
+
+  .deco-feat-title { font-size: 13px; font-weight: 500; color: var(--paper); margin-bottom: 2px; }
+  .deco-feat-sub   { font-size: 12px; color: var(--text3); }
+
+  /* ── FORM PANEL ── */
+  .form-panel {
+    background: var(--paper);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 52px 64px;
+    position: relative;
+  }
+
+  .form-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      90deg, transparent 0, transparent 79px,
+      rgba(212,196,168,0.2) 79px, rgba(212,196,168,0.2) 80px
+    ),
+    repeating-linear-gradient(
+      0deg, transparent 0, transparent 79px,
+      rgba(212,196,168,0.2) 79px, rgba(212,196,168,0.2) 80px
+    );
+    pointer-events: none;
+  }
+
+  .form-box {
+    width: 100%; max-width: 420px;
+    position: relative; z-index: 1;
+    animation: slideUp 0.6s both;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Tabs */
+  .form-tabs {
+    display: flex; gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .form-tab {
+    flex: 1; padding: 12px 0; text-align: center;
+    font-size: 14px; font-weight: 500; color: var(--text3);
+    text-decoration: none; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; transition: all 0.2s;
+    cursor: pointer; background: none; border-top: none;
+    border-left: none; border-right: none; font-family: 'DM Sans', sans-serif;
+  }
+  .form-tab.active {
+    color: var(--amber);
+    border-bottom-color: var(--amber);
+  }
+  .form-tab:hover:not(.active) { color: var(--text2); }
+
+  .form-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 700;
+    color: var(--ink); margin-bottom: 6px;
+  }
+  .form-sub {
+    font-size: 14px; color: var(--text3); margin-bottom: 28px;
+  }
+
+  /* Error / success */
+  .form-alert {
+    display: none; align-items: center; gap: 10px;
+    padding: 12px 16px; border-radius: 6px;
+    font-size: 13px; margin-bottom: 20px;
+  }
+  .form-alert.error  { background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.2); color: var(--error); display: flex; }
+  .form-alert.success{ background: rgba(39,174,96,0.08);  border: 1px solid rgba(39,174,96,0.2);  color: var(--success); display: flex; }
+
+  /* Field */
+  .field { margin-bottom: 18px; }
+  .field-label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 500; color: var(--text2);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .field-wrap { position: relative; }
+  .field-icon {
+    position: absolute; left: 13px; top: 50%;
+    transform: translateY(-50%); color: var(--text3);
+    pointer-events: none;
+  }
+  .field-input {
+    width: 100%; padding: 12px 14px 12px 40px;
+    background: white; border: 1.5px solid var(--border);
+    border-radius: 6px; color: var(--ink);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    outline: none; transition: all 0.2s;
+    appearance: none;
+  }
+  .field-input:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px rgba(232,130,26,0.1);
+  }
+  .field-input::placeholder { color: var(--text3); }
+  .field-input.error { border-color: var(--error); }
+
+  .field-hint {
+    font-size: 11px; color: var(--text3); margin-top: 5px;
+  }
+
+  /* Password toggle */
+  .pw-toggle {
+    position: absolute; right: 13px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); padding: 2px; transition: color 0.2s;
+  }
+  .pw-toggle:hover { color: var(--ink); }
+
+  /* Avatar picker */
+  .avatar-section { margin-bottom: 22px; }
+  .avatar-label {
+    font-size: 11px; font-weight: 500; color: var(--text2);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
+  .avatar-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  }
+  .avatar-opt {
+    aspect-ratio: 1;
+    border-radius: 10px; border: 2px solid var(--border);
+    background: white; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; color: var(--text3);
+    position: relative; overflow: hidden;
+  }
+  .avatar-opt:hover {
+    border-color: var(--amber); transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(232,130,26,0.2);
+  }
+  .avatar-opt.selected {
+    border-color: var(--amber); background: rgba(232,130,26,0.06);
+    color: var(--amber);
+  }
+  .avatar-opt.selected::after {
+    content: '';
+    position: absolute; top: 4px; right: 4px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--amber);
+  }
+
+  /* Two columns */
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* Submit button */
+  .btn-submit {
+    width: 100%; padding: 14px;
+    background: var(--amber); color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500;
+    border: none; border-radius: 6px; cursor: pointer;
+    transition: all 0.2s; margin-top: 6px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-submit:hover {
+    background: var(--amber2);
+    box-shadow: 0 6px 20px rgba(232,130,26,0.3);
+    transform: translateY(-1px);
+  }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit.loading { opacity: 0.7; pointer-events: none; }
+
+  .form-footer {
+    text-align: center; margin-top: 20px;
+    font-size: 13px; color: var(--text3);
+  }
+  .form-footer a { color: var(--amber); text-decoration: none; font-weight: 500; }
+  .form-footer a:hover { text-decoration: underline; }
+
+  /* Strength bar */
+  .pw-strength { margin-top: 6px; }
+  .pw-bar-bg {
+    height: 3px; background: var(--border);
+    border-radius: 2px; overflow: hidden;
+  }
+  .pw-bar-fill {
+    height: 100%; border-radius: 2px;
+    transition: all 0.3s; width: 0%;
+  }
+  .pw-strength-label {
+    font-size: 11px; margin-top: 4px; color: var(--text3);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- DECORATIVE LEFT PANEL -->
+  <div class="deco-panel">
+    <div class="deco-grid"></div>
+    <a href="/" class="deco-brand">buz<em>zz</em>.</a>
+
+    <div class="deco-center">
+      <div class="deco-quote">
+        Every great<br>story starts with<br>showing <em>up.</em>
+      </div>
+      <div class="deco-features">
+        <div class="deco-feat">
+          <div class="deco-feat-icon amber">
+            <i data-lucide="map" style="width:18px;height:18px"></i>
+          </div>
+          <div>
+            <div class="deco-feat-title">Events on the map</div>
+            <div class="deco-feat-sub">See what's happening near you in real time</div>
+          </div>
+        </div>
+        <div class="deco-feat">
+          <div class="deco-feat-icon sage">
+            <i data-lucide="users" style="width:18px;height:18px"></i>
+          </div>
+          <div>
+            <div class="deco-feat-title">Follow your friends</div>
+            <div class="deco-feat-sub">Know which events your crew is attending</div>
+          </div>
+        </div>
+        <div class="deco-feat">
+          <div class="deco-feat-icon coral">
+            <i data-lucide="bar-chart-2" style="width:18px;height:18px"></i>
+          </div>
+          <div>
+            <div class="deco-feat-title">Your event stats</div>
+            <div class="deco-feat-sub">Track every event you have ever attended</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--text3);position:relative;z-index:1">
+      Already have a story to tell.
+    </div>
+  </div>
+
+  <!-- FORM PANEL -->
+  <div class="form-panel">
+    <div class="form-box">
+
+      <div class="form-tabs">
+        <a class="form-tab {% if mode == 'signup' %}active{% endif %}" href="/signup">Create account</a>
+        <a class="form-tab {% if mode == 'login' %}active{% endif %}"  href="/login">Sign in</a>
+      </div>
+
+      <div id="alert-box" class="form-alert"></div>
+
+      <!-- ═══════════════ SIGNUP FORM ═══════════════ -->
+      {% if mode == 'signup' %}
+      <h2 class="form-heading">Join buzzz.</h2>
+      <p class="form-sub">Create your profile and start discovering events.</p>
+
+      <!-- Avatar selection -->
+      <div class="avatar-section">
+        <div class="avatar-label">
+          <i data-lucide="smile" style="width:13px;height:13px"></i>
+          Choose your avatar
+        </div>
+        <div class="avatar-grid" id="avatar-grid"></div>
+        <input type="hidden" id="selected-avatar" value="music">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <div class="field-label">
+            <i data-lucide="type" style="width:11px;height:11px"></i>
+            Display name
+          </div>
+          <div class="field-wrap">
+            <i data-lucide="user" class="field-icon" style="width:16px;height:16px"></i>
+            <input type="text" class="field-input" id="s-name" placeholder="Your name" autocomplete="off">
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">
+            <i data-lucide="at-sign" style="width:11px;height:11px"></i>
+            Username
+          </div>
+          <div class="field-wrap">
+            <i data-lucide="at-sign" class="field-icon" style="width:16px;height:16px"></i>
+            <input type="text" class="field-input" id="s-username" placeholder="unique_handle" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <i data-lucide="mail" style="width:11px;height:11px"></i>
+          Email address
+        </div>
+        <div class="field-wrap">
+          <i data-lucide="mail" class="field-icon" style="width:16px;height:16px"></i>
+          <input type="email" class="field-input" id="s-email" placeholder="you@example.com" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <i data-lucide="lock" style="width:11px;height:11px"></i>
+          Password
+        </div>
+        <div class="field-wrap">
+          <i data-lucide="lock" class="field-icon" style="width:16px;height:16px"></i>
+          <input type="password" class="field-input" id="s-password" placeholder="At least 6 characters" autocomplete="new-password" oninput="checkStrength(this.value)">
+          <button name="button" class="pw-toggle" type="button" onclick="togglePw('s-password', this)">
+            <i data-lucide="eye" style="width:16px;height:16px"></i>
+          </button>
+        </div>
+        <div class="pw-strength">
+          <div class="pw-bar-bg"><div class="pw-bar-fill" id="pw-bar"></div></div>
+          <div class="pw-strength-label" id="pw-label"></div>
+        </div>
+      </div>
+
+      <button class="btn-submit" onclick="doSignup()">
+        <i data-lucide="arrow-right" style="width:18px;height:18px"></i>
+        Create my account
+      </button>
+
+      <div class="form-footer">
+        Already have an account? <a href="/login">Sign in</a>
+      </div>
+
+      <!-- ═══════════════ LOGIN FORM ═══════════════ -->
+      {% else %}
+      <h2 class="form-heading">Welcome back.</h2>
+      <p class="form-sub">Sign in to see what's buzzing near you.</p>
+
+      <div class="field">
+        <div class="field-label">
+          <i data-lucide="at-sign" style="width:11px;height:11px"></i>
+          Username
+        </div>
+        <div class="field-wrap">
+          <i data-lucide="at-sign" class="field-icon" style="width:16px;height:16px"></i>
+          <input type="text" class="field-input" id="l-username" placeholder="your_username" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <i data-lucide="lock" style="width:11px;height:11px"></i>
+          Password
+        </div>
+        <div class="field-wrap">
+          <i data-lucide="lock" class="field-icon" style="width:16px;height:16px"></i>
+          <input type="password" class="field-input" id="l-password" placeholder="••••••••">
+          <button name="button" class="pw-toggle" type="button" onclick="togglePw('l-password', this)">
+            <i data-lucide="eye" style="width:16px;height:16px"></i>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-submit" onclick="doLogin()">
+        <i data-lucide="log-in" style="width:18px;height:18px"></i>
+        Sign in
+      </button>
+
+      <div class="form-footer">
+        New to buzzz? <a href="/signup">Create a free account</a>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+// ── AVATAR GRID ──
+const AVATARS = [
+  { id: 'music',    icon: 'music' },
+  { id: 'camera',   icon: 'camera' },
+  { id: 'zap',      icon: 'zap' },
+  { id: 'coffee',   icon: 'coffee' },
+  { id: 'star',     icon: 'star' },
+  { id: 'flame',    icon: 'flame' },
+  { id: 'globe',    icon: 'globe' },
+  { id: 'heart',    icon: 'heart' },
+  { id: 'sunset',   icon: 'sunset' },
+  { id: 'compass',  icon: 'compass' },
+  { id: 'feather',  icon: 'feather' },
+  { id: 'aperture', icon: 'aperture' },
+];
+
+const grid = document.getElementById('avatar-grid');
+if (grid) {
+  AVATARS.forEach((av, i) => {
+    const d = document.createElement('div');
+    d.className = 'avatar-opt' + (i === 0 ? ' selected' : '');
+    d.dataset.id = av.id;
+    d.innerHTML = `<i data-lucide="${av.icon}" style="width:20px;height:20px"></i>`;
+    d.onclick = () => {
+      document.querySelectorAll('.avatar-opt').forEach(x => x.classList.remove('selected'));
+      d.classList.add('selected');
+      document.getElementById('selected-avatar').value = av.id;
+    };
+    grid.appendChild(d);
+  });
+  lucide.createIcons();
+}
+
+// ── PASSWORD STRENGTH ──
+function checkStrength(val) {
+  const bar   = document.getElementById('pw-bar');
+  const label = document.getElementById('pw-label');
+  if (!bar) return;
+  const score = [val.length >= 6, val.length >= 10, /[A-Z]/.test(val), /[0-9]/.test(val), /[^a-zA-Z0-9]/.test(val)].filter(Boolean).length;
+  const levels = [
+    { pct: 0,   color: 'transparent', text: '' },
+    { pct: 20,  color: '#e74c3c', text: 'Weak' },
+    { pct: 45,  color: '#e8821a', text: 'Fair' },
+    { pct: 70,  color: '#f5a623', text: 'Good' },
+    { pct: 100, color: '#27ae60', text: 'Strong' },
+  ];
+  const lvl = levels[Math.min(score, 4)];
+  bar.style.width      = lvl.pct + '%';
+  bar.style.background = lvl.color;
+  label.textContent    = lvl.text;
+  label.style.color    = lvl.color;
+}
+
+// ── PASSWORD VISIBILITY TOGGLE ──
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const isText = inp.type === 'text';
+  inp.type = isText ? 'password' : 'text';
+  btn.innerHTML = isText
+    ? '<i data-lucide="eye" style="width:16px;height:16px"></i>'
+    : '<i data-lucide="eye-off" style="width:16px;height:16px"></i>';
+  lucide.createIcons();
+}
+
+// ── ALERT ──
+function showAlert(msg, type = 'error') {
+  const box = document.getElementById('alert-box');
+  box.className = 'form-alert ' + type;
+  box.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" style="width:16px;height:16px;flex-shrink:0"></i> ${msg}`;
+  lucide.createIcons();
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function clearAlert() {
+  const box = document.getElementById('alert-box');
+  box.className = 'form-alert';
+}
+
+// ── SIGNUP ──
+async function doSignup() {
+  clearAlert();
+  const btn  = document.querySelector('.btn-submit');
+  btn.classList.add('loading');
+  btn.innerHTML = '<i data-lucide="loader" style="width:18px;height:18px"></i> Creating account...';
+  lucide.createIcons();
+
+  const body = {
+    name    : document.getElementById('s-name').value,
+    username: document.getElementById('s-username').value,
+    email   : document.getElementById('s-email').value,
+    password: document.getElementById('s-password').value,
+    avatar  : document.getElementById('selected-avatar').value,
+  };
+
+  const res  = await fetch('/api/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+
+  btn.classList.remove('loading');
+  if (data.error) {
+    showAlert(data.error);
+    btn.innerHTML = '<i data-lucide="arrow-right" style="width:18px;height:18px"></i> Create my account';
+    lucide.createIcons();
+    return;
+  }
+  showAlert('Account created! Taking you in...', 'success');
+  setTimeout(() => window.location = data.redirect, 800);
+}
+
+// ── LOGIN ──
+async function doLogin() {
+  clearAlert();
+  const btn = document.querySelector('.btn-submit');
+  btn.classList.add('loading');
+  btn.innerHTML = '<i data-lucide="loader" style="width:18px;height:18px"></i> Signing in...';
+  lucide.createIcons();
+
+  const body = {
+    username: document.getElementById('l-username').value,
+    password: document.getElementById('l-password').value,
+  };
+
+  const res  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+
+  btn.classList.remove('loading');
+  if (data.error) {
+    showAlert(data.error);
+    btn.innerHTML = '<i data-lucide="log-in" style="width:18px;height:18px"></i> Sign in';
+    lucide.createIcons();
+    return;
+  }
+  showAlert('Welcome back!', 'success');
+  setTimeout(() => window.location = data.redirect, 700);
+}
+
+// Enter key
+document.addEventListener('keydown', e => { if (e.key === 'Enter') { document.querySelector('.btn-submit').click(); } });
+</script>
+</body>
+</html>
