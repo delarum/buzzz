@@ -42,3 +42,110 @@ def init_db():
  
 init_db()
  
+ #auth helpers
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("welcome"))
+        return f(*args, **kwargs)
+    return wrapper
+ 
+# ─────────────────────────────────────────
+#  2.1 — WELCOME / LANDING
+# ─────────────────────────────────────────
+ 
+@app.route("/")
+def welcome():
+    if "user_id" in session:
+        return redirect(url_for("dashboard"))
+    return render_template("welcome.html")
+ 
+# ─────────────────────────────────────────
+#  2.2 — REGISTRATION & LOGIN
+# ─────────────────────────────────────────
+ 
+@app.route("/signup", methods=["GET"])
+def signup():
+    if "user_id" in session:
+        return redirect(url_for("dashboard"))
+    return render_template("auth.html", mode="signup")
+ 
+@app.route("/login", methods=["GET"])
+def login():
+    if "user_id" in session:
+        return redirect(url_for("dashboard"))
+    return render_template("auth.html", mode="login")
+ 
+@app.route("/api/signup", methods=["POST"])
+def api_signup():
+    data     = request.get_json()
+    name     = data.get("name", "").strip()
+    username = data.get("username", "").strip().lower()
+    email    = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    avatar   = data.get("avatar", "avatar-1")
+ 
+    # Validation
+    if not all([name, username, email, password]):
+        return jsonify({"error": "All fields are required."}), 400
+    if len(username) < 3:
+        return jsonify({"error": "Username must be at least 3 characters."}), 400
+    if not re.match(r"^[a-z0-9_]+$", username):
+        return jsonify({"error": "Username: only letters, numbers and underscores."}), 400
+    if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
+        return jsonify({"error": "Please enter a valid email address."}), 400
+    if len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters."}), 400
+ 
+    try:
+        with get_db() as db:
+            db.execute(
+                "INSERT INTO users (name, username, email, password_hash, avatar) VALUES (?,?,?,?,?)",
+                (name, username, email, generate_password_hash(password), avatar)
+            )
+            user = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+            session["user_id"]  = user["id"]
+            session["username"] = user["username"]
+            session["name"]     = user["name"]
+        return jsonify({"ok": True, "redirect": "/onboarding"})
+    except sqlite3.IntegrityError as e:
+        if "username" in str(e):
+            return jsonify({"error": "That username is already taken."}), 400
+        if "email" in str(e):
+            return jsonify({"error": "That email is already registered."}), 400
+        return jsonify({"error": "Registration failed. Please try again."}), 400
+ 
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    data     = request.get_json()
+    username = data.get("username", "").strip().lower()
+    password = data.get("password", "")
+ 
+    if not username or not password:
+        return jsonify({"error": "Please fill in all fields."}), 400
+ 
+    with get_db() as db:
+        user = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+ 
+    if not user:
+        return jsonify({"error": "Username not found."}), 401
+    if not check_password_hash(user["password_hash"], password):
+        return jsonify({"error": "Incorrect password."}), 401
+ 
+    session["user_id"]  = user["id"]
+    session["username"] = user["username"]
+    session["name"]     = user["name"]
+ 
+    # Check if preferences exist
+    with get_db() as db:
+        prefs = db.execute("SELECT * FROM user_preferences WHERE user_id=?", (user["id"],)).fetchone()
+ 
+    redirect_to = "/dashboard" if prefs else "/onboarding"
+    return jsonify({"ok": True, "redirect": redirect_to})
+ 
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("welcome"))
+ 
