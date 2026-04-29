@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>buzzz. — Set your preferences</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root {
+    --ink:      #1a1208;
+    --paper:    #faf6ef;
+    --amber:    #e8821a;
+    --amber2:   #f5a623;
+    --amber-dim:#7a4309;
+    --cream:    #f0e8d8;
+    --sage:     #3d5a47;
+    --coral:    #d45f3c;
+    --border:   #d4c4a8;
+    --text2:    #6b5a42;
+    --text3:    #9c8870;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper); color: var(--ink);
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    padding: 20px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: white;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 900; font-style: italic;
+    color: var(--ink); text-decoration: none;
+  }
+  .topbar-brand em { color: var(--amber); font-style: normal; }
+
+  /* Progress */
+  .progress-wrap { display: flex; align-items: center; gap: 16px; }
+  .progress-steps { display: flex; gap: 6px; }
+  .prog-step {
+    width: 28px; height: 4px; border-radius: 2px;
+    background: var(--border); transition: background 0.4s;
+  }
+  .prog-step.done   { background: var(--amber); }
+  .prog-step.active { background: var(--amber2); }
+  .prog-label { font-size: 12px; color: var(--text3); }
+
+  /* Skip */
+  .skip-btn {
+    font-size: 13px; color: var(--text3); background: none;
+    border: none; cursor: pointer; padding: 4px 8px;
+    transition: color 0.2s; font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .skip-btn:hover { color: var(--ink); }
+
+  /* ── MAIN ── */
+  .quiz-main {
+    flex: 1; display: flex; align-items: flex-start;
+    justify-content: center; padding: 48px 24px;
+  }
+
+  .quiz-wrap {
+    width: 100%; max-width: 760px;
+  }
+
+  /* Question panels */
+  .q-panel {
+    display: none; animation: qIn 0.45s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  .q-panel.active { display: block; }
+  @keyframes qIn {
+    from { opacity: 0; transform: translateX(40px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes qOut {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-40px); }
+  }
+
+  .q-step-label {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11px; color: var(--amber); letter-spacing: 0.12em;
+    text-transform: uppercase; font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .q-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 700; line-height: 1.2;
+    color: var(--ink); margin-bottom: 10px;
+  }
+  .q-heading em { font-style: italic; color: var(--amber); }
+
+  .q-sub {
+    font-size: 14px; color: var(--text3);
+    margin-bottom: 36px; line-height: 1.6;
+  }
+
+  /* ── CATEGORY GRID (Q1) ── */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .cat-card {
+    background: white; border: 2px solid var(--border);
+    border-radius: 12px; padding: 20px 14px;
+    text-align: center; cursor: pointer;
+    transition: all 0.2s; position: relative;
+    overflow: hidden;
+  }
+  .cat-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(232,130,26,0.06), rgba(245,166,35,0.03));
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .cat-card:hover { border-color: var(--amber2); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(232,130,26,0.15); }
+  .cat-card:hover::before { opacity: 1; }
+  .cat-card.selected { border-color: var(--amber); background: rgba(232,130,26,0.05); }
+  .cat-card.selected::before { opacity: 1; }
+
+  .cat-icon-wrap {
+    width: 48px; height: 48px; border-radius: 12px;
+    margin: 0 auto 12px; display: flex;
+    align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .cat-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+
+  .cat-icon-wrap.music { background: rgba(122,67,9,0.12); color: #7a4309; }
+  .cat-icon-wrap.sports { background: rgba(61,90,71,0.12); color: #3d5a47; }
+  .cat-icon-wrap.food { background: rgba(212,95,60,0.12); color: #d45f3c; }
+  .cat-icon-wrap.tech { background: rgba(44,82,130,0.12); color: #2c5282; }
+  .cat-icon-wrap.art { background: rgba(107,33,168,0.12); color: #6b21a8; }
+  .cat-icon-wrap.outdoor { background: rgba(6,95,70,0.12); color: #065f46; }
+  .cat-icon-wrap.film { background: rgba(146,64,14,0.12); color: #92400e; }
+  .cat-icon-wrap.networking { background: rgba(30,58,95,0.12); color: #1e3a5f; }
+
+  .cat-check {
+    position: absolute; top: 10px; right: 10px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--amber); display: none;
+    align-items: center; justify-content: center;
+    color: white;
+  }
+  .cat-card.selected .cat-check { display: flex; }
+
+  /* ── DISTANCE SLIDER (Q2) ── */
+  .distance-area { margin-bottom: 40px; }
+
+  .distance-display {
+    text-align: center; margin-bottom: 28px;
+  }
+  .distance-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 64px; font-weight: 700; color: var(--amber);
+    line-height: 1; display: block;
+  }
+  .distance-unit { font-size: 18px; color: var(--text2); }
+
+  .range-wrap { position: relative; padding: 0 8px; }
+  .range-input {
+    width: 100%; appearance: none;
+    height: 6px; border-radius: 3px;
+    background: linear-gradient(to right, var(--amber) 0%, var(--amber) var(--pct, 30%), var(--border) var(--pct, 30%), var(--border) 100%);
+    outline: none; cursor: pointer;
+  }
+  .range-input::-webkit-slider-thumb {
+    appearance: none; width: 22px; height: 22px;
+    border-radius: 50%; background: var(--amber);
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(232,130,26,0.4);
+    cursor: pointer; transition: transform 0.2s;
+  }
+  .range-input::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  .range-labels {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text3); margin-top: 10px;
+  }
+
+  /* ── OPTION GRID (Q3, Q4, Q5) ── */
+  .opt-grid {
+    display: grid; gap: 12px;
+    margin-bottom: 40px;
+  }
+  .opt-grid.cols2 { grid-template-columns: 1fr 1fr; }
+  .opt-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .opt-card {
+    background: white; border: 2px solid var(--border);
+    border-radius: 10px; padding: 18px 20px;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .opt-card:hover { border-color: var(--amber2); box-shadow: 0 4px 16px rgba(232,130,26,0.12); }
+  .opt-card.selected { border-color: var(--amber); background: rgba(232,130,26,0.04); }
+
+  .opt-icon {
+    width: 40px; height: 40px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s;
+    background: var(--cream); color: var(--text2);
+  }
+  .opt-card.selected .opt-icon { background: var(--amber); color: white; }
+  .opt-card:hover .opt-icon { background: rgba(232,130,26,0.12); color: var(--amber); }
+
+  .opt-text-title { font-size: 14px; font-weight: 500; color: var(--ink); }
+  .opt-text-sub   { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  .opt-radio {
+    margin-left: auto; width: 18px; height: 18px;
+    border-radius: 50%; border: 2px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .opt-card.selected .opt-radio {
+    border-color: var(--amber); background: var(--amber);
+  }
+  .opt-card.selected .opt-radio::after {
+    content: ''; width: 6px; height: 6px;
+    border-radius: 50%; background: white;
+  }
+
+  /* ── VIBE SELECTOR (Q5) ── */
+  .vibe-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; margin-bottom: 40px;
+  }
+  .vibe-card {
+    background: white; border: 2px solid var(--border);
+    border-radius: 12px; padding: 24px 16px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+  }
+  .vibe-card:hover { transform: translateY(-3px); border-color: var(--amber2); box-shadow: 0 8px 20px rgba(232,130,26,0.12); }
+  .vibe-card.selected { border-color: var(--amber); background: rgba(232,130,26,0.04); }
+
+  .vibe-icon-wrap {
+    width: 52px; height: 52px; border-radius: 50%;
+    margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--cream); color: var(--text2);
+    transition: all 0.2s;
+  }
+  .vibe-card.selected .vibe-icon-wrap { background: var(--amber); color: white; }
+  .vibe-card:hover .vibe-icon-wrap { background: rgba(232,130,26,0.15); color: var(--amber); }
+
+  .vibe-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .vibe-sub   { font-size: 11px; color: var(--text3); line-height: 1.4; }
+
+  /* ── NAV BUTTONS ── */
+  .q-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 8px; border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  .btn-back {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 12px 20px; background: none;
+    border: 1.5px solid var(--border); border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--text2); cursor: pointer; transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: var(--ink); color: var(--ink); }
+  .btn-back:disabled { opacity: 0.3; pointer-events: none; }
+
+  .btn-next {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 28px; background: var(--amber);
+    border: none; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    color: var(--ink); cursor: pointer; transition: all 0.2s;
+  }
+  .btn-next:hover { background: var(--amber2); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(232,130,26,0.3); }
+  .btn-next:active { transform: translateY(0); }
+  .btn-next.loading { opacity: 0.7; pointer-events: none; }
+
+  .step-count { font-size: 13px; color: var(--text3); }
+
+  /* Final celebration */
+  .final-step {
+    text-align: center; padding: 40px 20px;
+  }
+  .final-icon {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--amber), var(--amber2));
+    margin: 0 auto 24px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; box-shadow: 0 12px 32px rgba(232,130,26,0.35);
+    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="/" class="topbar-brand">buz<em>zz</em>.</a>
+
+  <div class="progress-wrap">
+    <div class="progress-steps" id="prog-steps">
+      <div class="prog-step active"></div>
+      <div class="prog-step"></div>
+      <div class="prog-step"></div>
+      <div class="prog-step"></div>
+      <div class="prog-step"></div>
+    </div>
+    <span class="prog-label" id="prog-label">Step 1 of 5</span>
+  </div>
+
+  <button class="skip-btn" onclick="skipAll()">
+    Skip for now
+    <i data-lucide="chevron-right" style="width:14px;height:14px"></i>
+  </button>
+</div>
+
+<!-- QUIZ -->
+<div class="quiz-main">
+<div class="quiz-wrap">
+
+  <!-- ─── Q1: CATEGORIES ─── -->
+  <div class="q-panel active" id="q1">
+    <div class="q-step-label">
+      <i data-lucide="tag" style="width:12px;height:12px"></i>
+      Question 1 of 5
+    </div>
+    <h2 class="q-heading">What kind of events get you <em>excited?</em></h2>
+    <p class="q-sub">Pick everything that interests you. You can always change this later.</p>
+
+    <div class="cat-grid">
+      {% set cats = [
+        ('music',      'music',       '#7a4309', 'rgba(122,67,9,0.12)',    'Music'),
+        ('sports',     'trophy',      '#3d5a47', 'rgba(61,90,71,0.12)',    'Sports'),
+        ('food',       'utensils',    '#d45f3c', 'rgba(212,95,60,0.12)',   'Food & Drink'),
+        ('tech',       'cpu',         '#2c5282', 'rgba(44,82,130,0.12)',   'Tech'),
+        ('art',        'palette',     '#6b21a8', 'rgba(107,33,168,0.12)', 'Art'),
+        ('outdoor',    'mountain',    '#065f46', 'rgba(6,95,70,0.12)',    'Outdoors'),
+        ('film',       'film',        '#92400e', 'rgba(146,64,14,0.12)',  'Film'),
+        ('networking', 'briefcase',   '#1e3a5f', 'rgba(30,58,95,0.12)',  'Networking'),
+      ] %}
+      {% for id, icon, color, bg, label in cats %}
+      <div class="cat-card" data-cat="{{ id }}" onclick="toggleCat(this)">
+        <div class="cat-icon-wrap {{ id }}">
+          <i data-lucide="{{ icon }}" style="width:22px;height:22px"></i>
+        </div>
+        <div class="cat-name">{{ label }}</div>
+        <div class="cat-check">
+          <i data-lucide="check" style="width:12px;height:12px"></i>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="q-nav">
+      <button class="btn-back" disabled>
+        <i data-lucide="arrow-left" style="width:16px;height:16px"></i>
+        Back
+      </button>
+      <span class="step-count" id="cat-count">Select at least 1</span>
+      <button class="btn-next" onclick="nextQ(1)">
+        Next
+        <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── Q2: DISTANCE ─── -->
+  <div class="q-panel" id="q2">
+    <div class="q-step-label">
+      <i data-lucide="map-pin" style="width:12px;height:12px"></i>
+      Question 2 of 5
+    </div>
+    <h2 class="q-heading">How far will you <em>travel</em> for an event?</h2>
+    <p class="q-sub">Drag the slider to set your maximum travel distance.</p>
+
+    <div class="distance-area">
+      <div class="distance-display">
+        <span class="distance-num" id="dist-num">20</span>
+        <span class="distance-unit">km away</span>
+      </div>
+      <div class="range-wrap">
+        <input type="range" class="range-input" id="dist-slider"
+               min="1" max="100" value="20"
+               oninput="updateDist(this.value)">
+        <div class="range-labels">
+          <span>1 km</span>
+          <span>25 km</span>
+          <span>50 km</span>
+          <span>75 km</span>
+          <span>100 km</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="q-nav">
+      <button class="btn-back" onclick="prevQ(2)">
+        <i data-lucide="arrow-left" style="width:16px;height:16px"></i>
+        Back
+      </button>
+      <span class="step-count">2 / 5</span>
+      <button class="btn-next" onclick="nextQ(2)">
+        Next
+        <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── Q3: TIMING ─── -->
+  <div class="q-panel" id="q3">
+    <div class="q-step-label">
+      <i data-lucide="clock" style="width:12px;height:12px"></i>
+      Question 3 of 5
+    </div>
+    <h2 class="q-heading">When do you prefer <em>going out?</em></h2>
+    <p class="q-sub">We'll use this to prioritise events on the right days.</p>
+
+    <div class="opt-grid cols2">
+      {% set timings = [
+        ('weekdays',  'calendar',     'Weekdays',  'Mon – Fri events'),
+        ('weekends',  'sunset',       'Weekends',  'Sat & Sun events'),
+        ('evenings',  'moon',         'Evenings',  'After 6 PM'),
+        ('either',    'refresh-cw',   'Any time',  'Show me everything'),
+      ] %}
+      {% for val, icon, title, sub in timings %}
+      <div class="opt-card" data-opt="{{ val }}" data-group="timing"
+           onclick="selectOpt(this, 'timing')">
+        <div class="opt-icon">
+          <i data-lucide="{{ icon }}" style="width:20px;height:20px"></i>
+        </div>
+        <div class="opt-text">
+          <div class="opt-text-title">{{ title }}</div>
+          <div class="opt-text-sub">{{ sub }}</div>
+        </div>
+        <div class="opt-radio"></div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="q-nav">
+      <button class="btn-back" onclick="prevQ(3)">
+        <i data-lucide="arrow-left" style="width:16px;height:16px"></i>
+        Back
+      </button>
+      <span class="step-count">3 / 5</span>
+      <button class="btn-next" onclick="nextQ(3)">
+        Next
+        <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── Q4: PRICE ─── -->
+  <div class="q-panel" id="q4">
+    <div class="q-step-label">
+      <i data-lucide="tag" style="width:12px;height:12px"></i>
+      Question 4 of 5
+    </div>
+    <h2 class="q-heading">Free events or are you happy to <em>pay?</em></h2>
+    <p class="q-sub">This helps us show you events that actually fit your plans.</p>
+
+    <div class="opt-grid cols3">
+      {% set prices = [
+        ('free',    'gift',         'Free only',    'Zero cost events'),
+        ('paid',    'credit-card',  'Ticketed',      'Paid events only'),
+        ('both',    'layers',       'Both',          'Show me all of it'),
+      ] %}
+      {% for val, icon, title, sub in prices %}
+      <div class="opt-card" data-opt="{{ val }}" data-group="price_type"
+           onclick="selectOpt(this, 'price_type')">
+        <div style="text-align:center;flex:1">
+          <div class="opt-icon" style="margin:0 auto 10px">
+            <i data-lucide="{{ icon }}" style="width:20px;height:20px"></i>
+          </div>
+          <div class="opt-text-title">{{ title }}</div>
+          <div class="opt-text-sub">{{ sub }}</div>
+        </div>
+        <div class="opt-radio" style="position:absolute;top:12px;right:12px"></div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="q-nav">
+      <button class="btn-back" onclick="prevQ(4)">
+        <i data-lucide="arrow-left" style="width:16px;height:16px"></i>
+        Back
+      </button>
+      <span class="step-count">4 / 5</span>
+      <button class="btn-next" onclick="nextQ(4)">
+        Next
+        <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── Q5: VIBE ─── -->
+  <div class="q-panel" id="q5">
+    <div class="q-step-label">
+      <i data-lucide="zap" style="width:12px;height:12px"></i>
+      Question 5 of 5
+    </div>
+    <h2 class="q-heading">What's your <em>event vibe?</em></h2>
+    <p class="q-sub">This shapes the energy of your recommendations.</p>
+
+    <div class="vibe-grid">
+      {% set vibes = [
+        ('solo',      'user',        'Solo Explorer', 'I like experiencing events on my own'),
+        ('social',    'users',       'Social Butterfly', 'Events are better with a crowd'),
+        ('intimate',  'heart',       'Intimate Gatherings', 'Small venues, real connections'),
+        ('adventurous','compass',    'Adventurous', 'Surprise me, anything goes'),
+        ('cultural',  'globe',       'Cultural', 'Art, heritage, ideas'),
+        ('active',    'activity',    'Active', 'Sports, outdoor, movement'),
+      ] %}
+      {% for val, icon, title, sub in vibes %}
+      <div class="vibe-card" data-opt="{{ val }}" data-group="vibe"
+           onclick="selectOpt(this, 'vibe')">
+        <div class="vibe-icon-wrap">
+          <i data-lucide="{{ icon }}" style="width:24px;height:24px"></i>
+        </div>
+        <div class="vibe-title">{{ title }}</div>
+        <div class="vibe-sub">{{ sub }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="q-nav">
+      <button class="btn-back" onclick="prevQ(5)">
+        <i data-lucide="arrow-left" style="width:16px;height:16px"></i>
+        Back
+      </button>
+      <span class="step-count">5 / 5</span>
+      <button class="btn-next" id="save-btn" onclick="savePrefs()">
+        <i data-lucide="check" style="width:18px;height:18px"></i>
+        Find my events
+      </button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+lucide.createIcons();
+
+// ── STATE ──
+const prefs = {
+  categories: [],
+  distance_km: 20,
+  timing: null,
+  price_type: null,
+  vibe: null,
+};
+
+let currentQ = 1;
+
+// ── NAVIGATION ──
+function showQ(n) {
+  document.querySelectorAll('.q-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('q' + n).classList.add('active');
+  currentQ = n;
+  updateProgress(n);
+}
+
+function nextQ(from) {
+  if (from === 1 && prefs.categories.length === 0) {
+    document.getElementById('cat-count').textContent = 'Please select at least 1';
+    document.getElementById('cat-count').style.color = '#c0392b';
+    return;
+  }
+  showQ(from + 1);
+}
+
+function prevQ(from) { showQ(from - 1); }
+
+function updateProgress(n) {
+  const steps = document.querySelectorAll('.prog-step');
+  steps.forEach((s, i) => {
+    s.classList.remove('done', 'active');
+    if (i < n - 1) s.classList.add('done');
+    else if (i === n - 1) s.classList.add('active');
+  });
+  document.getElementById('prog-label').textContent = `Step ${n} of 5`;
+}
+
+// ── Q1: CATEGORIES ──
+function toggleCat(el) {
+  el.classList.toggle('selected');
+  const cat = el.dataset.cat;
+  if (el.classList.contains('selected')) {
+    if (!prefs.categories.includes(cat)) prefs.categories.push(cat);
+  } else {
+    prefs.categories = prefs.categories.filter(c => c !== cat);
+  }
+  const cnt = document.getElementById('cat-count');
+  cnt.textContent = prefs.categories.length === 0
+    ? 'Select at least 1'
+    : `${prefs.categories.length} selected`;
+  cnt.style.color = prefs.categories.length === 0 ? '#9c8870' : '#3d5a47';
+}
+
+// ── Q2: DISTANCE SLIDER ──
+function updateDist(val) {
+  prefs.distance_km = parseInt(val);
+  document.getElementById('dist-num').textContent = val;
+  const pct = ((val - 1) / 99) * 100;
+  document.getElementById('dist-slider').style.setProperty('--pct', pct + '%');
+}
+updateDist(20);
+
+// ── Q3/Q4/Q5: SINGLE SELECT ──
+function selectOpt(el, group) {
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  prefs[group] = el.dataset.opt;
+}
+
+// ── SKIP ──
+function skipAll() {
+  prefs.categories  = ['music', 'art'];
+  prefs.timing      = 'either';
+  prefs.price_type  = 'both';
+  prefs.vibe        = 'social';
+  savePrefs();
+}
+
+// ── SAVE ──
+async function savePrefs() {
+  if (!prefs.timing)     prefs.timing     = 'either';
+  if (!prefs.price_type) prefs.price_type = 'both';
+  if (!prefs.vibe)       prefs.vibe       = 'social';
+  if (!prefs.categories.length) prefs.categories = ['music'];
+
+  const btn = document.getElementById('save-btn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<i data-lucide="loader" style="width:18px;height:18px"></i> Setting up...';
+  lucide.createIcons();
+
+  const res  = await fetch('/api/preferences', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(prefs),
+  });
+  const data = await res.json();
+  if (data.ok) window.location = data.redirect;
+}
+
+// Enter key advances steps
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (currentQ < 5) nextQ(currentQ);
+    else savePrefs();
+  }
+});
+</script>
+</body>
+</html>
