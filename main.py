@@ -148,4 +148,56 @@ def api_login():
 def logout():
     session.clear()
     return redirect(url_for("welcome"))
+
+# preference quiz and onboarding
+ 
+@app.route("/onboarding")
+@login_required
+def onboarding():
+    return render_template("onboarding.html", name=session.get("name", ""))
+ 
+@app.route("/api/preferences", methods=["POST"])
+@login_required
+def save_preferences():
+    data = request.get_json()
+ 
+    categories  = data.get("categories", [])
+    distance_km = int(data.get("distance_km", 20))
+    timing      = data.get("timing", "either")
+    price_type  = data.get("price_type", "both")
+    vibe        = data.get("vibe", "social")
+ 
+    with get_db() as db:
+        db.execute("""
+            INSERT INTO user_preferences (user_id, categories, distance_km, timing, price_type, vibe)
+            VALUES (?,?,?,?,?,?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                categories=excluded.categories,
+                distance_km=excluded.distance_km,
+                timing=excluded.timing,
+                price_type=excluded.price_type,
+                vibe=excluded.vibe,
+                updated_at=CURRENT_TIMESTAMP
+        """, (session["user_id"], json.dumps(categories), distance_km, timing, price_type, vibe))
+ 
+    return jsonify({"ok": True, "redirect": "/dashboard"})
+ 
+# ─────────────────────────────────────────
+#  DASHBOARD (placeholder)
+# ─────────────────────────────────────────
+ 
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return render_template("dashboard.html", name=session.get("name", ""))
+ 
+# ─────────────────────────────────────────
+#  RUN
+# ─────────────────────────────────────────
+ 
+if __name__ == "__main__":
+    print("\n  buzzz. is live")
+    print("  ─────────────────────────")
+    print("  http://localhost:5000\n")
+    app.run(debug=True, port=5000)
  
