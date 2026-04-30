@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>buzzz. — Discover Events</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root{--ink:#1a1208;--paper:#faf6ef;--amber:#e8821a;--amber2:#f5a623;--cream:#f0e8d8;--sage:#3d5a47;--coral:#d45f3c;--border:#d4c4a8;--text2:#6b5a42;--text3:#9c8870;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);overflow:hidden;}
+.app{display:flex;flex-direction:column;height:100vh;}
+/* NAV */
+.nav{height:54px;background:var(--ink);display:flex;align-items:center;padding:0 18px;gap:10px;flex-shrink:0;z-index:200;}
+.brand{font-family:'Playfair Display',serif;font-size:21px;font-weight:900;font-style:italic;color:var(--paper);text-decoration:none;}
+.brand em{color:var(--amber);font-style:normal;}
+.nsw{position:relative;flex:1;max-width:300px;}
+.nsearch{width:100%;padding:7px 12px 7px 32px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:18px;color:var(--paper);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
+.nsearch:focus{border-color:rgba(232,130,26,.5);}
+.nsearch::placeholder{color:rgba(255,255,255,.3);}
+.nsi{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.3);pointer-events:none;}
+.ncats{display:flex;gap:5px;overflow-x:auto;flex:1;}
+.ncats::-webkit-scrollbar{display:none;}
+.nc{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.nc:hover{border-color:rgba(232,130,26,.4);color:rgba(255,255,255,.8);}
+.nc.on{background:var(--amber);border-color:var(--amber);color:var(--ink);font-weight:500;}
+.nr{display:flex;align-items:center;gap:7px;margin-left:auto;flex-shrink:0;}
+.nicn{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.55);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;text-decoration:none;}
+.nicn:hover{border-color:var(--amber);color:var(--amber);}
+.nav-av{width:32px;height:32px;border-radius:50%;border:2px solid transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;transition:border-color .2s;flex-shrink:0;}
+.nav-av:hover{border-color:var(--amber);}
+/* SPLIT */
+.split{display:flex;flex:1;overflow:hidden;}
+/* FEED */
+.feed{width:390px;flex-shrink:0;background:var(--paper);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.fh{padding:12px 16px 8px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.fh-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:2px;}
+.fh-meta{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.srcbadge{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 7px;border-radius:9px;border:1px solid var(--border);background:var(--cream);color:var(--text2);}
+.srcbadge.live{background:rgba(39,174,96,.1);border-color:rgba(39,174,96,.3);color:#27ae60;}
+.sorts{display:flex;gap:4px;margin-top:7px;}
+.sb{padding:3px 9px;border-radius:11px;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .2s;}
+.sb.on{background:var(--ink);border-color:var(--ink);color:white;}
+.flist{flex:1;overflow-y:auto;padding:8px;}
+.flist::-webkit-scrollbar{width:3px;}
+.flist::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+/* CARD */
+.ecard{background:white;border:1.5px solid var(--border);border-radius:11px;margin-bottom:7px;cursor:pointer;transition:all .2s;overflow:hidden;}
+.ecard:hover{border-color:var(--amber);transform:translateY(-1px);box-shadow:0 4px 14px rgba(232,130,26,.1);}
+.ecard.sel{border-color:var(--amber);box-shadow:0 0 0 2px rgba(232,130,26,.12);}
+.ci{height:84px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.ci img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.ci-icon{color:rgba(255,255,255,.2);position:relative;z-index:1;}
+.cbadge{position:absolute;top:7px;left:7px;padding:2px 7px;border-radius:7px;background:rgba(0,0,0,.5); -webkit-backdrop-filter: blur(4px); backdrop-filter:blur(4px);font-size:10px;color:white;letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:3px;z-index:2;}
+.cfree{position:absolute;top:7px;right:7px;padding:2px 7px;border-radius:7px;background:rgba(39,174,96,.85);font-size:10px;color:white;font-weight:500;z-index:2;}
+.ctick{position:absolute;bottom:7px;right:7px;width:20px;height:20px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;color:white;z-index:2;}
+.cb{padding:9px 11px;}
+.ct{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px;line-height:1.2;}
+.cms{display:flex;flex-wrap:wrap;gap:5px;}
+.cm{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text2);}
+.cf{padding:6px 11px;border-top:1px solid rgba(212,196,168,.3);display:flex;align-items:center;justify-content:space-between;}
+.cprice{font-size:12px;font-weight:600;color:var(--amber);}
+.catt{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text3);}
+/* MAP */
+.mwrap{flex:1;position:relative;}
+#map{width:100%;height:100%;}
+/* POPUP */
+.pop{position:absolute;bottom:18px;left:50%;transform:translateX(-50%) translateY(14px);width:300px;background:white;border-radius:13px;box-shadow:0 14px 36px rgba(0,0,0,.2);overflow:hidden;z-index:500;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.34,1.2,.64,1);}
+.pop.show{opacity:1;pointer-events:all;transform:translateX(-50%) translateY(0);}
+.pop-img{height:86px;display:flex;align-items:center;justify-content:center;position:relative;}
+.pop-x{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.4);border:none;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;}
+.pop-body{padding:11px 13px;}
+.pop-cat{font-size:10px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}
+.pop-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;margin-bottom:7px;line-height:1.2;}
+.pop-ms{display:flex;gap:9px;margin-bottom:9px;flex-wrap:wrap;}
+.pop-m{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text2);}
+.pop-acts{display:flex;gap:6px;}
+.pop-pri{flex:1;padding:8px;background:var(--amber);border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--ink);cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;}
+.pop-pri:hover{background:var(--amber2);}
+.pop-sec{padding:8px 11px;background:var(--cream);border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .2s;}
+.pop-sec:hover{background:var(--border);}
+.pop-sec.rsvped{color:var(--sage);}
+/* MARKER DOT */
+.mk{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 7px rgba(0,0,0,.3);}
+/* EMPTY */
+.fempty{padding:32px 18px;text-align:center;color:var(--text2);}
+.fempty p{font-size:13px;line-height:1.6;margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="nav">
+  <a href="/" class="brand">buz<em>zz</em>.</a>
+  <div class="nsw">
+    <i data-lucide="search" class="nsi" style="width:12px;height:12px"></i>
+    <input type="text" class="nsearch" id="q" placeholder="Search events…" oninput="filterQ(this.value)">
+  </div>
+  <div class="ncats">
+    <button class="nc on" data-cat="all" onclick="filterCat('all',this)"><i data-lucide="layout-grid" style="width:11px;height:11px"></i>All</button>
+    {% for cat,icon in [('music','music'),('food','utensils'),('tech','cpu'),('art','palette'),('outdoor','mountain'),('sports','trophy'),('film','film'),('networking','briefcase')] %}
+    <button class="nc" data-cat="{{ cat }}" onclick="filterCat('{{ cat }}',this)"><i data-lucide="{{ icon }}" style="width:11px;height:11px"></i>{{ cat|title }}</button>
+    {% endfor %}
+  </div>
+  <div class="nr">
+    <a href="/profile" class="nicn" title="My profile"><i data-lucide="user" style="width:14px;height:14px"></i></a>
+    <a href="/onboarding" class="nicn" title="Preferences"><i data-lucide="sliders" style="width:14px;height:14px"></i></a>
+    <a href="/logout" class="nicn" title="Sign out"><i data-lucide="log-out" style="width:14px;height:14px"></i></a>
+    <a href="/profile" class="nav-av" style="background:{{ me.avatar_bg }};color:{{ me.avatar_color }}">
+      <i data-lucide="{{ me.avatar_icon or 'user' }}" style="width:15px;height:15px"></i>
+    </a>
+  </div>
+</nav>
+<div class="split">
+  <div class="feed">
+    <div class="fh">
+      <div class="fh-title">Events near you</div>
+      <div class="fh-meta">
+        {{ events|length }} found &nbsp;
+        <span class="srcbadge {% if source=='eventbrite' %}live{% endif %}">
+          <i data-lucide="{{ 'zap' if source=='eventbrite' else 'database' }}" style="width:9px;height:9px"></i>
+          {{ 'Eventbrite live' if source=='eventbrite' else 'Local data' }}
+        </span>
+        {% if source=='local' %}<span style="color:var(--text3);font-size:11px">Set EVENTBRITE_TOKEN for live data</span>{% endif %}
+      </div>
+      <div class="sorts">
+        <button class="sb on" onclick="sortBy('date',this)">Date</button>
+        <button class="sb" onclick="sortBy('price',this)">Price</button>
+        <button class="sb" onclick="sortBy('popular',this)">Popular</button>
+      </div>
+    </div>
+    <div class="flist" id="flist">
+      {% set GC={'music':'linear-gradient(135deg,#3d1a00,#7a4309)','food':'linear-gradient(135deg,#5a1a0a,#d45f3c)','tech':'linear-gradient(135deg,#0d1f3d,#2c5282)','art':'linear-gradient(135deg,#2d0a50,#6b21a8)','outdoor':'linear-gradient(135deg,#012d1a,#065f46)','sports':'linear-gradient(135deg,#060f25,#1e3a5f)','film':'linear-gradient(135deg,#2d1500,#92400e)','networking':'linear-gradient(135deg,#050f18,#1a3a4f)'} %}
+      {% set GI={'music':'music','food':'utensils','tech':'cpu','art':'palette','outdoor':'mountain','sports':'trophy','film':'film','networking':'briefcase'} %}
+      {% if events %}{% for e in events %}
+      <div class="ecard {% if e.rsvped %}sel{% endif %}" id="c{{ e.id }}"
+           data-id="{{ e.id }}" data-cat="{{ e.category }}"
+           data-q="{{ (e.title+' '+(e.location_name or ''))|lower }}"
+           data-date="{{ e.date_time }}" data-price="{{ e.price }}" data-pop="{{ e.attendee_count }}"
+           onclick="focusEv({{ e.id }},{{ e.lat }},{{ e.lng }},this)">
+        <div class="ci" style="background:{{ GC.get(e.category,'linear-gradient(135deg,#1a1208,#3a2a18)') }}">
+          {% if e.image_url %}<img src="{{ e.image_url }}" alt="" loading="lazy">{% endif %}
+          <i data-lucide="{{ GI.get(e.category,'calendar') }}" class="ci-icon" style="width:30px;height:30px"></i>
+          <span class="cbadge"><i data-lucide="{{ GI.get(e.category,'calendar') }}" style="width:9px;height:9px"></i>{{ e.category|title }}</span>
+          {% if e.is_free %}<span class="cfree">Free</span>{% endif %}
+          {% if e.rsvped %}<span class="ctick"><i data-lucide="check" style="width:10px;height:10px"></i></span>{% endif %}
+        </div>
+        <div class="cb">
+          <div class="ct">{{ e.title }}</div>
+          <div class="cms">
+            <span class="cm"><i data-lucide="calendar" style="width:10px;height:10px;color:var(--amber)"></i>{{ e.date_time[:10] }}</span>
+            <span class="cm"><i data-lucide="clock" style="width:10px;height:10px;color:var(--sage)"></i>{{ e.date_time[11:16] }}</span>
+            <span class="cm"><i data-lucide="map-pin" style="width:10px;height:10px;color:var(--coral)"></i>{{ (e.location_name or '')[:24] }}</span>
+          </div>
+        </div>
+        <div class="cf">
+          <span class="cprice">{{ e.is_free_label }}</span>
+          <span class="catt"><i data-lucide="users" style="width:10px;height:10px"></i>{{ e.attendee_count }}</span>
+        </div>
+      </div>
+      {% endfor %}{% else %}
+      <div class="fempty"><i data-lucide="search-x" style="width:36px;height:36px;color:var(--border)"></i>
+        <p>No events match your preferences.<br><a href="/onboarding" style="color:var(--amber)">Update preferences</a></p></div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="mwrap">
+    <div id="map"></div>
+    <div class="pop" id="pop">
+      <div class="pop-img" id="pop-img">
+        <button class="pop-x" onclick="closePop()"><i data-lucide="x" style="width:12px;height:12px"></i></button>
+      </div>
+      <div class="pop-body">
+        <div class="pop-cat" id="pop-cat"></div>
+        <div class="pop-title" id="pop-title"></div>
+        <div class="pop-ms">
+          <span class="pop-m"><i data-lucide="calendar" style="width:11px;height:11px;color:var(--amber)"></i><span id="pop-date"></span></span>
+          <span class="pop-m"><i data-lucide="map-pin" style="width:11px;height:11px;color:var(--coral)"></i><span id="pop-loc"></span></span>
+          <span class="pop-m"><i data-lucide="tag" style="width:11px;height:11px;color:var(--sage)"></i><span id="pop-price"></span></span>
+        </div>
+        <div class="pop-acts">
+          <a class="pop-pri" id="pop-link" href="#"><i data-lucide="arrow-right" style="width:13px;height:13px"></i>View details</a>
+          <button class="pop-sec" id="pop-rsvp" onclick="quickRsvp()">
+            <i data-lucide="check-circle" style="width:13px;height:13px"></i>
+            <span id="pop-rl">I'm going</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+lucide.createIcons();
+const EVS={{ events|tojson }};
+const GC={'music':'linear-gradient(135deg,#3d1a00,#7a4309)','food':'linear-gradient(135deg,#5a1a0a,#d45f3c)','tech':'linear-gradient(135deg,#0d1f3d,#2c5282)','art':'linear-gradient(135deg,#2d0a50,#6b21a8)','outdoor':'linear-gradient(135deg,#012d1a,#065f46)','sports':'linear-gradient(135deg,#060f25,#1e3a5f)','film':'linear-gradient(135deg,#2d1500,#92400e)','networking':'linear-gradient(135deg,#050f18,#1a3a4f)'};
+const MC={'music':'#7a4309','food':'#d45f3c','tech':'#2c5282','art':'#6b21a8','outdoor':'#3d5a47','sports':'#1e3a5f','film':'#92400e','networking':'#1a3a4f'};
+const map=L.map('map',{zoomControl:false}).setView([-1.2864,36.8172],12);
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© CARTO',maxZoom:19}).addTo(map);
+const mkrs={};
+EVS.forEach(e=>{
+  if(!e.lat||!e.lng)return;
+  const col=MC[e.category]||'#7a4309';
+  const icon=L.divIcon({html:`<div class="mk" style="background:${col}"></div>`,className:'',iconSize:[26,26],iconAnchor:[13,26]});
+  const mk=L.marker([e.lat,e.lng],{icon}).addTo(map);
+  mk.on('click',()=>showPop(e));
+  mkrs[e.id]=mk;
+});
+let pid=null;
+function showPop(e){
+  document.getElementById('pop-img').style.background=GC[e.category]||'#1a1208';
+  document.getElementById('pop-cat').textContent=e.category.charAt(0).toUpperCase()+e.category.slice(1);
+  document.getElementById('pop-title').textContent=e.title;
+  document.getElementById('pop-date').textContent=(e.date_time||'').slice(0,10)+' '+(e.date_time||'').slice(11,16);
+  document.getElementById('pop-loc').textContent=(e.location_name||'').slice(0,20);
+  document.getElementById('pop-price').textContent=e.is_free?'Free':`KES ${(e.price||0).toLocaleString()}`;
+  document.getElementById('pop-link').href=`/events/${e.id}`;
+  const rl=document.getElementById('pop-rl');
+  const rb=document.getElementById('pop-rsvp');
+  rl.textContent=e.rsvped?"Going!":"I'm going";
+  rb.className='pop-sec'+(e.rsvped?' rsvped':'');
+  lucide.createIcons();
+  pid=e.id;
+  document.getElementById('pop').classList.add('show');
+  document.querySelectorAll('.ecard').forEach(c=>c.classList.remove('sel'));
+  const card=document.getElementById('c'+e.id);
+  if(card){card.classList.add('sel');card.scrollIntoView({behavior:'smooth',block:'nearest'});}
+}
+function closePop(){document.getElementById('pop').classList.remove('show');pid=null;}
+async function quickRsvp(){
+  if(!pid)return;
+  const ev=EVS.find(e=>e.id==pid);if(!ev)return;
+  const action=ev.rsvped?'cancel':'going';
+  const r=await fetch(`/api/rsvp/${pid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});
+  if((await r.json()).ok){ev.rsvped=action==='going';showPop(ev);}
+}
+function focusEv(id,lat,lng){
+  map.flyTo([lat,lng],14,{animate:true,duration:.8});
+  const ev=EVS.find(e=>e.id==id);if(ev)showPop(ev);
+}
+function filterCat(cat,btn){
+  document.querySelectorAll('.nc').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  document.querySelectorAll('.ecard').forEach(c=>{c.style.display=cat==='all'||c.dataset.cat===cat?'block':'none';});
+  Object.entries(mkrs).forEach(([id,mk])=>{
+    const ev=EVS.find(e=>e.id==id);
+    const show=cat==='all'||(ev&&ev.category===cat);
+    show?(!map.hasLayer(mk)&&map.addLayer(mk)):(map.hasLayer(mk)&&map.removeLayer(mk));
+  });
+}
+function filterQ(q){
+  const s=q.toLowerCase().trim();
+  document.querySelectorAll('.ecard').forEach(c=>{c.style.display=!s||c.dataset.q.includes(s)?'block':'none';});
+}
+function sortBy(by,btn){
+  document.querySelectorAll('.sb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  const list=document.getElementById('flist');
+  [...list.querySelectorAll('.ecard')].sort((a,b)=>{
+    if(by==='date')return(a.dataset.date||'').localeCompare(b.dataset.date||'');
+    if(by==='price')return parseInt(a.dataset.price)-parseInt(b.dataset.price);
+    return parseInt(b.dataset.pop)-parseInt(a.dataset.pop);
+  }).forEach(c=>list.appendChild(c));
+}
+map.on('click',closePop);
+</script>
+</body>
+</html>

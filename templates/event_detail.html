@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>buzzz. — {{ event.title }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root{--ink:#1a1208;--paper:#faf6ef;--amber:#e8821a;--amber2:#f5a623;--cream:#f0e8d8;--sage:#3d5a47;--coral:#d45f3c;--border:#d4c4a8;--text2:#6b5a42;--text3:#9c8870;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;}
+/* NAV */
+.nav{height:52px;background:var(--ink);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:100;}
+.brand{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;font-style:italic;color:var(--paper);text-decoration:none;}
+.brand em{color:var(--amber);font-style:normal;}
+.nav-back{display:flex;align-items:center;gap:5px;color:rgba(255,255,255,.5);font-size:13px;text-decoration:none;transition:color .2s;}
+.nav-back:hover{color:var(--amber);}
+.nav-t{color:rgba(255,255,255,.6);font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nav-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;margin-left:auto;flex-shrink:0;}
+/* HERO */
+.hero{height:260px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.hero-icon{color:rgba(255,255,255,.15);position:relative;z-index:1;}
+.hero img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.hero-ov{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 20%,rgba(250,246,239,.95) 85%,var(--paper) 100%);}
+.hero-tags{position:absolute;top:18px;left:22px;display:flex;gap:7px;z-index:2;}
+.htag{padding:4px 10px;border-radius:10px;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);font-size:11px;color:white;display:flex;align-items:center;gap:4px;}
+.htag.free{background:rgba(39,174,96,.85);font-weight:500;}
+.htag.going{background:rgba(232,130,26,.85);}
+/* BODY */
+.body{display:grid;grid-template-columns:1fr 340px;gap:36px;max-width:1060px;margin:0 auto;padding:0 28px 56px;}
+.main-col{}
+.etitle{font-family:'Playfair Display',serif;font-size:clamp(26px,3.5vw,38px);font-weight:700;line-height:1.15;margin-bottom:18px;}
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;}
+.chip{display:flex;align-items:center;gap:7px;background:white;border:1px solid var(--border);border-radius:7px;padding:9px 12px;}
+.chip-ico{width:30px;height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.chip-l{font-size:10px;color:var(--text3);margin-bottom:1px;}
+.chip-v{font-size:13px;font-weight:500;}
+/* SECTION */
+.shead{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.shead::after{content:'';flex:1;height:1px;background:var(--border);}
+.desc{font-size:14px;line-height:1.75;color:var(--text2);margin-bottom:28px;}
+/* MINI MAP */
+#dmap{height:190px;border-radius:11px;overflow:hidden;border:1px solid var(--border);margin-bottom:8px;}
+.map-addr{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text2);margin-bottom:28px;}
+/* FRIENDS */
+.friends{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;}
+.fchip{display:flex;align-items:center;gap:7px;background:white;border:1px solid var(--border);border-radius:18px;padding:5px 11px 5px 5px;font-size:13px;}
+.fav{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+/* RELATED */
+.rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.rcard{background:white;border:1px solid var(--border);border-radius:9px;overflow:hidden;text-decoration:none;color:var(--ink);transition:all .2s;display:block;}
+.rcard:hover{border-color:var(--amber);transform:translateY(-2px);box-shadow:0 5px 14px rgba(232,130,26,.1);}
+.rcard-img{height:66px;display:flex;align-items:center;justify-content:center;}
+.rcard-body{padding:9px 11px;}
+.rcard-t{font-size:12px;font-weight:600;margin-bottom:3px;line-height:1.2;}
+.rcard-m{font-size:11px;color:var(--text3);}
+/* STICKY COL */
+.sticky{position:sticky;top:68px;align-self:start;display:flex;flex-direction:column;gap:14px;padding-top:6px;}
+.tcard{background:white;border:1px solid var(--border);border-radius:13px;overflow:hidden;}
+.th{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.th-pl{font-size:11px;color:var(--text3);margin-bottom:2px;}
+.th-price{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--amber);}
+.th-free{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--sage);}
+.th-att{text-align:right;}
+.th-an{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;}
+.th-al{font-size:11px;color:var(--text3);}
+.tb{padding:16px 18px;}
+.rsvp-btn{width:100%;padding:13px;border-radius:7px;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:7px;}
+.rsvp-btn.going{background:var(--amber);color:var(--ink);}
+.rsvp-btn.going:hover{background:var(--amber2);box-shadow:0 4px 14px rgba(232,130,26,.3);}
+.rsvp-btn.cancel{background:rgba(212,95,60,.07);border:1px solid rgba(212,95,60,.25);color:var(--coral);}
+.rsvp-btn.cancel:hover{background:rgba(212,95,60,.12);}
+.rsvp-msg{text-align:center;font-size:12px;color:var(--sage);padding:6px;display:none;}
+.rsvp-msg.show{display:block;}
+.eb-link{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:13px;text-decoration:none;transition:all .2s;margin-top:8px;}
+.eb-link:hover{border-color:var(--amber);color:var(--amber);}
+.share-row{display:flex;gap:7px;}
+.sbtn{flex:1;padding:9px;border:1px solid var(--border);border-radius:7px;background:white;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.sbtn:hover{border-color:var(--ink);color:var(--ink);}
+.orgcard{background:white;border:1px solid var(--border);border-radius:11px;padding:14px;}
+.orgh{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.orgav{width:38px;height:38px;border-radius:7px;background:var(--cream);display:flex;align-items:center;justify-content:center;color:var(--text2);flex-shrink:0;}
+.orgn{font-size:14px;font-weight:600;}
+.orgl{font-size:11px;color:var(--text3);}
+.orgb{font-size:13px;color:var(--text2);line-height:1.5;}
+</style>
+</head>
+<body>
+{% set GC={'music':'linear-gradient(135deg,#3d1a00,#7a4309)','food':'linear-gradient(135deg,#5a1a0a,#d45f3c)','tech':'linear-gradient(135deg,#0d1f3d,#2c5282)','art':'linear-gradient(135deg,#2d0a50,#6b21a8)','outdoor':'linear-gradient(135deg,#012d1a,#065f46)','sports':'linear-gradient(135deg,#060f25,#1e3a5f)','film':'linear-gradient(135deg,#2d1500,#92400e)','networking':'linear-gradient(135deg,#050f18,#1a3a4f)'} %}
+{% set GI={'music':'music','food':'utensils','tech':'cpu','art':'palette','outdoor':'mountain','sports':'trophy','film':'film','networking':'briefcase'} %}
+<nav class="nav">
+  <a href="/" class="brand">buz<em>zz</em>.</a>
+  <a href="/events" class="nav-back"><i data-lucide="arrow-left" style="width:14px;height:14px"></i>Back</a>
+  <span class="nav-t">{{ event.title }}</span>
+  <a href="/profile" class="nav-av" data-avatar-bg="{{ me.avatar_bg }}" data-avatar-color="{{ me.avatar_color }}">
+    <i data-lucide="{{ me.avatar_icon or 'user' }}" style="width:15px;height:15px"></i>
+  </a>
+</nav>
+<div class="hero" style="background:{{ GC.get(event.category,'#1a1208') }}">
+  {% if event.image_url %}<img src="{{ event.image_url }}" alt="{{ event.title }}">{% endif %}
+  <i data-lucide="{{ GI.get(event.category,'calendar') }}" class="hero-icon" style="width:110px;height:110px"></i>
+  <div class="hero-ov"></div>
+  <div class="hero-tags">
+    <span class="htag"><i data-lucide="{{ GI.get(event.category,'calendar') }}" style="width:10px;height:10px"></i>{{ event.category|title }}</span>
+    {% if event.is_free %}<span class="htag free"><i data-lucide="gift" style="width:10px;height:10px"></i>Free</span>{% endif %}
+    {% if event.rsvped %}<span class="htag going"><i data-lucide="check-circle" style="width:10px;height:10px"></i>You're going</span>{% endif %}
+  </div>
+</div>
+<div class="body">
+  <div class="main-col">
+    <h1 class="etitle">{{ event.title }}</h1>
+    <div class="chips">
+      <div class="chip">
+        <div class="chip-ico" style="background:rgba(232,130,26,.1);color:var(--amber)"><i data-lucide="calendar" style="width:16px;height:16px"></i></div>
+        <div><div class="chip-l">Date</div><div class="chip-v">{{ event.date_time[:10] }}</div></div>
+      </div>
+      <div class="chip">
+        <div class="chip-ico" style="background:rgba(61,90,71,.1);color:var(--sage)"><i data-lucide="clock" style="width:16px;height:16px"></i></div>
+        <div><div class="chip-l">Time</div><div class="chip-v">{{ event.date_time[11:16] }}</div></div>
+      </div>
+      <div class="chip">
+        <div class="chip-ico" style="background:rgba(212,95,60,.1);color:var(--coral)"><i data-lucide="map-pin" style="width:16px;height:16px"></i></div>
+        <div><div class="chip-l">Venue</div><div class="chip-v">{{ event.location_name }}</div></div>
+      </div>
+      <div class="chip">
+        <div class="chip-ico" style="background:rgba(122,67,9,.1);color:var(--amber)"><i data-lucide="users" style="width:16px;height:16px"></i></div>
+        <div><div class="chip-l">Attending</div><div class="chip-v">{{ event.total_rsvps + event.attendee_count }}</div></div>
+      </div>
+    </div>
+    <div class="shead">About this event</div>
+    <div class="desc">{{ event.description or 'No description available.' }}</div>
+    <div class="shead">Location</div>
+    <div id="dmap"></div>
+    <div class="map-addr"><i data-lucide="navigation" style="width:12px;height:12px;color:var(--coral)"></i>{{ event.address or event.location_name }}, Kenya</div>
+    {% if event.friends_going %}
+    <div class="shead">Friends going</div>
+    <div class="friends" style="margin-bottom:28px">
+      {% for f in event.friends_going %}
+      <div class="fchip">
+        <div class="fav" style="background:{{ f.avatar_bg or '#3d1a00' }};color:{{ f.avatar_color or '#e8821a' }}">
+          <i data-lucide="{{ f.avatar_icon or 'user' }}" style="width:11px;height:11px"></i>
+        </div>
+        {{ f.name }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if related %}
+    <div class="shead">More like this</div>
+    <div class="rel-grid">
+      {% for r in related %}
+      {% set rc={'music':'linear-gradient(135deg,#3d1a00,#7a4309)','food':'linear-gradient(135deg,#5a1a0a,#d45f3c)','tech':'linear-gradient(135deg,#0d1f3d,#2c5282)','art':'linear-gradient(135deg,#2d0a50,#6b21a8)','outdoor':'linear-gradient(135deg,#012d1a,#065f46)','sports':'linear-gradient(135deg,#060f25,#1e3a5f)','film':'linear-gradient(135deg,#2d1500,#92400e)','networking':'linear-gradient(135deg,#050f18,#1a3a4f)'} %}
+      <a class="rcard" href="/events/{{ r.id }}">
+        <div class="rcard-img" style="background:{{ rc.get(r.category,'#1a1208') }}">
+          <i data-lucide="{{ GI.get(r.category,'calendar') }}" style="width:26px;height:26px;color:rgba(255,255,255,.22)"></i>
+        </div>
+        <div class="rcard-body">
+          <div class="rcard-t">{{ r.title[:42] }}{% if r.title|length>42 %}…{% endif %}</div>
+          <div class="rcard-m">{{ r.date_time[:10] }} · {{ 'Free' if r.is_free else 'KES '+r.price|string }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div class="sticky">
+    <div class="tcard">
+      <div class="th">
+        <div>
+          <div class="th-pl">Entry</div>
+          {% if event.is_free %}<div class="th-free">Free</div>
+          {% else %}<div class="th-price">KES {{ "{:,}".format(event.price) }}</div>{% endif %}
+        </div>
+        <div class="th-att">
+          <div class="th-an">{{ event.total_rsvps + event.attendee_count }}</div>
+          <div class="th-al">going</div>
+        </div>
+      </div>
+      <div class="tb">
+        <button class="rsvp-btn {% if event.rsvped %}cancel{% else %}going{% endif %}" id="rbtn" onclick="toggleRsvp()">
+          <i data-lucide="{% if event.rsvped %}x-circle{% else %}check-circle{% endif %}" style="width:17px;height:17px"></i>
+          <span id="rlabel">{% if event.rsvped %}Cancel my RSVP{% else %}I'm going{% endif %}</span>
+        </button>
+        <div class="rsvp-msg {% if event.rsvped %}show{% endif %}" id="rmsg">
+          <i data-lucide="check-circle" style="width:13px;height:13px"></i>
+          You're confirmed!
+        </div>
+        {% if event.event_url %}
+        <a class="eb-link" href="{{ event.event_url }}" target="_blank">
+          <i data-lucide="external-link" style="width:13px;height:13px"></i>View on Eventbrite
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="share-row">
+      <button class="sbtn" onclick="copyLink(this)"><i data-lucide="link" style="width:13px;height:13px"></i>Copy link</button>
+      <button class="sbtn" onclick="shareWA()"><i data-lucide="share-2" style="width:13px;height:13px"></i>Share</button>
+    </div>
+    <div class="orgcard">
+      <div class="orgh">
+        <div class="orgav"><i data-lucide="building-2" style="width:19px;height:19px"></i></div>
+        <div><div class="orgn">{{ event.location_name }}</div><div class="orgl">Venue</div></div>
+      </div>
+      <div class="orgb">{{ event.address or 'Nairobi, Kenya' }}</div>
+    </div>
+  </div>
+</div>
+<script>
+lucide.createIcons();
+const navAv=document.querySelector('.nav-av');
+if(navAv){
+  navAv.style.background=navAv.dataset.avatarBg;
+  navAv.style.color=navAv.dataset.avatarColor;
+}
+const map=L.map('dmap',{zoomControl:true,dragging:true}).setView([{{ event.lat or -1.2864 }},{{ event.lng or 36.8172 }}],15);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© CARTO',maxZoom:19}).addTo(map);
+const dot=L.divIcon({html:`<div style="width:18px;height:18px;border-radius:50%;background:var(--amber);border:3px solid white;box-shadow:0 2px 7px rgba(0,0,0,.3)"></div>`,className:'',iconSize:[18,18],iconAnchor:[9,9]});
+L.marker([{{ event.lat or -1.2864 }},{{ event.lng or 36.8172 }}],{icon:dot}).addTo(map).bindPopup('{{ event.title|replace("'","\\'")|safe }}').openPopup();
+let going={{ 'true' if event.rsvped else 'false' }};
+const eid={{ event.id }};
+async function toggleRsvp(){
+  const action=going?'cancel':'going';
+  const r=await fetch(`/api/rsvp/${eid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});
+  if(!(await r.json()).ok)return;
+  going=!going;
+  const btn=document.getElementById('rbtn');
+  const lbl=document.getElementById('rlabel');
+  const msg=document.getElementById('rmsg');
+  if(going){
+    btn.className='rsvp-btn cancel';
+    btn.innerHTML='<i data-lucide="x-circle" style="width:17px;height:17px"></i><span>Cancel my RSVP</span>';
+    msg.className='rsvp-msg show';
+  } else {
+    btn.className='rsvp-btn going';
+    btn.innerHTML='<i data-lucide="check-circle" style="width:17px;height:17px"></i><span>I\'m going</span>';
+    msg.className='rsvp-msg';
+  }
+  lucide.createIcons();
+}
+function copyLink(btn){
+  navigator.clipboard.writeText(window.location.href);
+  const o=btn.innerHTML;btn.innerHTML='<i data-lucide="check" style="width:13px;height:13px"></i>Copied!';
+  lucide.createIcons();setTimeout(()=>{btn.innerHTML=o;lucide.createIcons();},2000);
+}
+function shareWA(){window.open(`https://wa.me/?text=${encodeURIComponent(document.title+'\n'+window.location.href)}`,'_blank');}
+</script>
+</body>
+</html>
