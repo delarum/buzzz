@@ -32,6 +32,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--paper);c
 .nicn:hover{border-color:var(--amber);color:var(--amber);}
 .nav-av{width:32px;height:32px;border-radius:50%;border:2px solid transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;transition:border-color .2s;flex-shrink:0;}
 .nav-av:hover{border-color:var(--amber);}
+.ci.music{background:linear-gradient(135deg,#3d1a00,#7a4309);}
+.ci.food{background:linear-gradient(135deg,#5a1a0a,#d45f3c);}
+.ci.tech{background:linear-gradient(135deg,#0d1f3d,#2c5282);}
+.ci.art{background:linear-gradient(135deg,#2d0a50,#6b21a8);}
+.ci.outdoor{background:linear-gradient(135deg,#012d1a,#065f46);}
+.ci.sports{background:linear-gradient(135deg,#060f25,#1e3a5f);}
+.ci.film{background:linear-gradient(135deg,#2d1500,#92400e);}
+.ci.networking{background:linear-gradient(135deg,#050f18,#1a3a4f);}
 /* SPLIT */
 .split{display:flex;flex:1;overflow:hidden;}
 /* FEED */
@@ -108,7 +116,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--paper);c
     <a href="/profile" class="nicn" title="My profile"><i data-lucide="user" style="width:14px;height:14px"></i></a>
     <a href="/onboarding" class="nicn" title="Preferences"><i data-lucide="sliders" style="width:14px;height:14px"></i></a>
     <a href="/logout" class="nicn" title="Sign out"><i data-lucide="log-out" style="width:14px;height:14px"></i></a>
-    <a href="/profile" class="nav-av" style="background:{{ me.avatar_bg }};color:{{ me.avatar_color }}">
+    <a href="/profile" class="nav-av" aria-label="View profile" data-avatar-bg="{{ me.avatar_bg }}" data-avatar-color="{{ me.avatar_color }}">
       <i data-lucide="{{ me.avatar_icon or 'user' }}" style="width:15px;height:15px"></i>
     </a>
   </div>
@@ -139,8 +147,13 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--paper);c
            data-id="{{ e.id }}" data-cat="{{ e.category }}"
            data-q="{{ (e.title+' '+(e.location_name or ''))|lower }}"
            data-date="{{ e.date_time }}" data-price="{{ e.price }}" data-pop="{{ e.attendee_count }}"
-           onclick="focusEv({{ e.id }},{{ e.lat }},{{ e.lng }},this)">
-        <div class="ci" style="background:{{ GC.get(e.category,'linear-gradient(135deg,#1a1208,#3a2a18)') }}">
+           data-lat="{{ e.lat }}" data-lng="{{ e.lng }}"
+           data-title="{{ e.title|e('html_attr') }}"
+           data-loc="{{ (e.location_name or '')[:20]|e('html_attr') }}"
+           data-is_free="{{ 'true' if e.is_free else 'false' }}"
+           data-rsvped="{{ 'true' if e.rsvped else 'false' }}"
+           onclick="focusEv(this)">
+        <div class="ci {{ e.category }}">
           {% if e.image_url %}<img src="{{ e.image_url }}" alt="" loading="lazy">{% endif %}
           <i data-lucide="{{ GI.get(e.category,'calendar') }}" class="ci-icon" style="width:30px;height:30px"></i>
           <span class="cbadge"><i data-lucide="{{ GI.get(e.category,'calendar') }}" style="width:9px;height:9px"></i>{{ e.category|title }}</span>
@@ -194,7 +207,19 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--paper);c
 </div>
 <script>
 lucide.createIcons();
-const EVS={{ events|tojson }};
+const EVS = Array.from(document.querySelectorAll('.ecard')).map(c=>({
+  id: parseInt(c.dataset.id,10),
+  category: c.dataset.cat,
+  title: c.dataset.title,
+  date_time: c.dataset.date,
+  location_name: c.dataset.loc,
+  price: parseInt(c.dataset.price,10)||0,
+  attendee_count: parseInt(c.dataset.pop,10)||0,
+  is_free: c.dataset.is_free==='true',
+  rsvped: c.dataset.rsvped==='true',
+  lat: parseFloat(c.dataset.lat)||0,
+  lng: parseFloat(c.dataset.lng)||0
+}));
 const GC={'music':'linear-gradient(135deg,#3d1a00,#7a4309)','food':'linear-gradient(135deg,#5a1a0a,#d45f3c)','tech':'linear-gradient(135deg,#0d1f3d,#2c5282)','art':'linear-gradient(135deg,#2d0a50,#6b21a8)','outdoor':'linear-gradient(135deg,#012d1a,#065f46)','sports':'linear-gradient(135deg,#060f25,#1e3a5f)','film':'linear-gradient(135deg,#2d1500,#92400e)','networking':'linear-gradient(135deg,#050f18,#1a3a4f)'};
 const MC={'music':'#7a4309','food':'#d45f3c','tech':'#2c5282','art':'#6b21a8','outdoor':'#3d5a47','sports':'#1e3a5f','film':'#92400e','networking':'#1a3a4f'};
 const map=L.map('map',{zoomControl:false}).setView([-1.2864,36.8172],12);
@@ -237,9 +262,12 @@ async function quickRsvp(){
   const r=await fetch(`/api/rsvp/${pid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});
   if((await r.json()).ok){ev.rsvped=action==='going';showPop(ev);}
 }
-function focusEv(id,lat,lng){
+function focusEv(el){
+  const lat=parseFloat(el.dataset.lat);
+  const lng=parseFloat(el.dataset.lng);
   map.flyTo([lat,lng],14,{animate:true,duration:.8});
-  const ev=EVS.find(e=>e.id==id);if(ev)showPop(ev);
+  const ev=EVS.find(e=>e.id===parseInt(el.dataset.id,10));
+  if(ev)showPop(ev);
 }
 function filterCat(cat,btn){
   document.querySelectorAll('.nc').forEach(b=>b.classList.remove('on'));btn.classList.add('on');

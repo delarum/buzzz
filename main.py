@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3, os, json, re
 from datetime import datetime
 from functools import wraps
+from events_service import get_events, get_event_detail
  
 app = Flask(__name__)
 app.secret_key = "buzzz-secret-key-2026"
@@ -181,6 +182,236 @@ def save_preferences():
         """, (session["user_id"], json.dumps(categories), distance_km, timing, price_type, vibe))
  
     return jsonify({"ok": True, "redirect": "/dashboard"})
+
+# ── DB ──────────────────────────────────────────────────────────────────────
+def get_db():
+    c = sqlite3.connect(DB_PATH); c.row_factory = sqlite3.Row; return c
+
+def init_db():
+    with get_db() as db:
+        db.executescript("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL,
+                avatar_icon TEXT DEFAULT 'music',
+                avatar_color TEXT DEFAULT '#e8821a',
+                avatar_bg TEXT DEFAULT '#3d1a00',
+                bio TEXT DEFAULT '',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS user_preferences (
+                user_id INTEGER PRIMARY KEY REFERENCES users(id),
+                categories TEXT DEFAULT '[]', distance_km INTEGER DEFAULT 20,
+                timing TEXT DEFAULT 'either', price_type TEXT DEFAULT 'both',
+                vibe TEXT DEFAULT 'social',
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT DEFAULT 'local',
+                title TEXT NOT NULL, description TEXT, category TEXT NOT NULL,
+                location_name TEXT, address TEXT, lat REAL, lng REAL,
+                date_time DATETIME, price INTEGER DEFAULT 0, is_free INTEGER DEFAULT 0,
+                image_url TEXT DEFAULT '', event_url TEXT DEFAULT '',
+                attendee_count INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS rsvps (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER REFERENCES users(id),
+                event_id INTEGER REFERENCES events(id),
+                status TEXT DEFAULT 'going',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, event_id));
+        """)
+
+init_db()
+
+def login_required(f):
+    @wraps(f)
+    def w(*a, **kw):
+        if "user_id" not in session: return redirect(url_for("welcome"))
+        return f(*a, **kw)
+    return w
+
+def get_prefs():
+    with get_db() as db:
+        row = db.execute("SELECT * FROM user_preferences WHERE user_id=?",
+                         (session["user_id"],)).fetchone()
+    if not row:
+        return {"categories":[],"distance_km":30,"timing":"either","price_type":"both","vibe":"social"}
+    d = dict(row); d["categories"] = json.loads(d.get("categories","[]")); return d
+
+def get_me():
+    with get_db() as db:
+        u = db.execute("SELECT * FROM users WHERE id=?",(session["user_id"],)).fetchone()
+    return dict(u) if u else {}
+
+# ── 2.1 WELCOME ─────────────────────────────────────────────────────────────
+@app.route("/")
+def welcome():
+    if "user_id" in session: return redirect(url_for("events_page"))
+    return render_template("welcome.html")
+
+# ── 2.2 AUTH ─────────────────────────────────────────────────────────────────
+@app.route("/signup")
+def signup():
+    return render_template("auth.html", mode="signup")
+
+@app.route("/login")
+def login():
+    return render_template("auth.html", mode="login")
+
+@app.route("/api/signup", methods=["POST"])
+def api_signup():
+    d = request.get_json()
+    name=d.get("name","").strip(); username=d.get("username","").strip().lower()
+    email=d.get("email","").strip().lower(); password=d.get("password","")
+    av_icon=d.get("avatar_icon","music"); av_color=d.get("avatar_color","#e8821a")
+    av_bg=d.get("avatar_bg","#3d1a00")
+    if not all([name,username,email,password]): return jsonify({"error":"All fields required."}),400
+    if len(username)<3: return jsonify({"error":"Username min 3 chars."}),400
+    if not re.match(r"^[a-z0-9_]+$",username): return jsonify({"error":"Username: letters/numbers/underscores."}),400
+    if not re.match(r"^[^@]+@[^@]+\.[^@]+$",email): return jsonify({"error":"Invalid email."}),400
+    if len(password)<6: return jsonify({"error":"Password min 6 chars."}),400
+    try:
+        with get_db() as db:
+            db.execute("INSERT INTO users(name,username,email,password_hash,avatar_icon,avatar_color,avatar_bg) VALUES(?,?,?,?,?,?,?)",
+                       (name,username,email,generate_password_hash(password),av_icon,av_color,av_bg))
+            u=db.execute("SELECT * FROM users WHERE username=?",(username,)).fetchone()
+            session.update({"user_id":u["id"],"username":u["username"],"name":u["name"]})
+        return jsonify({"ok":True,"redirect":"/onboarding"})
+    except sqlite3.IntegrityError:
+        return jsonify({"error":"Username or email already taken."}),400
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    d=request.get_json(); username=d.get("username","").strip().lower(); password=d.get("password","")
+    if not username or not password: return jsonify({"error":"Fill in all fields."}),400
+    with get_db() as db:
+        u=db.execute("SELECT * FROM users WHERE username=?",(username,)).fetchone()
+    if not u: return jsonify({"error":"Username not found."}),401
+    if not check_password_hash(u["password_hash"],password): return jsonify({"error":"Wrong password."}),401
+    session.update({"user_id":u["id"],"username":u["username"],"name":u["name"]})
+    with get_db() as db:
+        prefs=db.execute("SELECT * FROM user_preferences WHERE user_id=?",(u["id"],)).fetchone()
+    return jsonify({"ok":True,"redirect":"/events" if prefs else "/onboarding"})
+
+@app.route("/logout")
+def logout():
+    session.clear(); return redirect(url_for("welcome"))
+
+# ── 2.3 ONBOARDING ───────────────────────────────────────────────────────────
+@app.route("/onboarding")
+@login_required
+def onboarding():
+    return render_template("onboarding.html", name=session.get("name",""))
+
+@app.route("/api/preferences", methods=["POST"])
+@login_required
+def save_preferences():
+    d=request.get_json()
+    with get_db() as db:
+        db.execute("""INSERT INTO user_preferences(user_id,categories,distance_km,timing,price_type,vibe)
+            VALUES(?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET
+            categories=excluded.categories,distance_km=excluded.distance_km,
+            timing=excluded.timing,price_type=excluded.price_type,
+            vibe=excluded.vibe,updated_at=CURRENT_TIMESTAMP""",
+            (session["user_id"],json.dumps(d.get("categories",[])),
+             int(d.get("distance_km",20)),d.get("timing","either"),
+             d.get("price_type","both"),d.get("vibe","social")))
+    return jsonify({"ok":True,"redirect":"/events"})
+
+# ── 2.4 EVENT FEED + MAP ─────────────────────────────────────────────────────
+@app.route("/events")
+@login_required
+def events_page():
+    prefs=get_prefs(); me=get_me()
+    events,source=get_events(categories=prefs["categories"] or None,
+        distance_km=prefs["distance_km"],timing=prefs["timing"],price_type=prefs["price_type"])
+    with get_db() as db:
+        rsvped={r["event_id"] for r in db.execute(
+            "SELECT event_id FROM rsvps WHERE user_id=?",(session["user_id"],)).fetchall()}
+    for e in events:
+        e["rsvped"]=(int(e["id"]) in rsvped)
+        e["is_free_label"]="Free" if e.get("is_free") else f"KES {e.get('price',0):,}"
+    return render_template("events.html",events=events,prefs=prefs,source=source,me=me)
+
+@app.route("/api/events")
+@login_required
+def api_events():
+    prefs=get_prefs(); cat=request.args.get("category")
+    events,_=get_events(categories=[cat] if cat else (prefs["categories"] or None),
+        distance_km=prefs["distance_km"],timing=prefs["timing"],price_type=prefs["price_type"])
+    return jsonify(events)
+
+# ── 2.5 EVENT DETAIL + RSVP ──────────────────────────────────────────────────
+@app.route("/events/<int:event_id>")
+@login_required
+def event_detail(event_id):
+    event=get_event_detail(event_id)
+    if not event: return "Event not found",404
+    me=get_me()
+    with get_db() as db:
+        rsvp=db.execute("SELECT * FROM rsvps WHERE user_id=? AND event_id=?",
+                        (session["user_id"],event_id)).fetchone()
+        friends=db.execute("""SELECT u.name,u.username,u.avatar_icon,u.avatar_color,u.avatar_bg
+            FROM rsvps r JOIN users u ON r.user_id=u.id
+            WHERE r.event_id=? AND r.user_id!=? LIMIT 8""",(event_id,session["user_id"])).fetchall()
+        total=db.execute("SELECT COUNT(*) as c FROM rsvps WHERE event_id=?",(event_id,)).fetchone()["c"]
+    event.update({"rsvped":bool(rsvp),"friends_going":[dict(f) for f in friends],
+                  "total_rsvps":total,"is_free_label":"Free" if event.get("is_free") else f"KES {event.get('price',0):,}"})
+    related,_=get_events(categories=[event.get("category")],distance_km=50)
+    related=[e for e in related if int(e["id"])!=event_id][:4]
+    return render_template("event_detail.html",event=event,related=related,me=me)
+
+@app.route("/api/rsvp/<int:event_id>",methods=["POST"])
+@login_required
+def rsvp(event_id):
+    action=request.get_json().get("action","going")
+    with get_db() as db:
+        if action=="cancel":
+            db.execute("DELETE FROM rsvps WHERE user_id=? AND event_id=?",(session["user_id"],event_id))
+        else:
+            db.execute("""INSERT INTO rsvps(user_id,event_id,status) VALUES(?,?,?)
+                ON CONFLICT(user_id,event_id) DO UPDATE SET status=excluded.status""",
+                (session["user_id"],event_id,action))
+        count=db.execute("SELECT COUNT(*) as c FROM rsvps WHERE event_id=?",(event_id,)).fetchone()["c"]
+    return jsonify({"ok":True,"status":"going" if action!="cancel" else "cancelled","count":count})
+
+# ── 2.6 AVATAR / PROFILE ─────────────────────────────────────────────────────
+@app.route("/profile")
+@login_required
+def profile():
+    me=get_me()
+    with get_db() as db:
+        attended=db.execute("""SELECT e.*,r.created_at as rsvp_date FROM rsvps r
+            JOIN events e ON r.event_id=e.id WHERE r.user_id=?
+            ORDER BY e.date_time DESC LIMIT 20""",(session["user_id"],)).fetchall()
+        stats=db.execute("""SELECT category,COUNT(*) as cnt FROM rsvps r
+            JOIN events e ON r.event_id=e.id WHERE r.user_id=?
+            GROUP BY category ORDER BY cnt DESC""",(session["user_id"],)).fetchall()
+        total=db.execute("SELECT COUNT(*) as c FROM rsvps WHERE user_id=?",(session["user_id"],)).fetchone()["c"]
+    return render_template("profile.html",me=me,
+        attended=[dict(a) for a in attended],
+        stats=[dict(s) for s in stats],total=total)
+
+@app.route("/api/avatar",methods=["POST"])
+@login_required
+def save_avatar():
+    d=request.get_json()
+    with get_db() as db:
+        db.execute("UPDATE users SET avatar_icon=?,avatar_color=?,avatar_bg=?,bio=? WHERE id=?",
+            (d.get("icon","music"),d.get("color","#e8821a"),
+             d.get("bg","#3d1a00"),d.get("bio",""),session["user_id"]))
+    return jsonify({"ok":True})
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return redirect(url_for("events_page"))
+
+if __name__=="__main__":
+    print("\n  buzzz. → http://localhost:5000")
+    print("  Eventbrite: export EVENTBRITE_TOKEN=your_token\n")
+    app.run(debug=True,port=5000)
  
 # ─────────────────────────────────────────
 #  DASHBOARD (placeholder)

@@ -31,7 +31,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);m
 .htag.going{background:rgba(232,130,26,.85);}
 /* BODY */
 .body{display:grid;grid-template-columns:1fr 340px;gap:36px;max-width:1060px;margin:0 auto;padding:0 28px 56px;}
-.main-col{}
+.hero.music,.rcard-img.music{background:linear-gradient(135deg,#3d1a00,#7a4309);}
+.hero.food,.rcard-img.food{background:linear-gradient(135deg,#5a1a0a,#d45f3c);}
+.hero.tech,.rcard-img.tech{background:linear-gradient(135deg,#0d1f3d,#2c5282);}
+.hero.art,.rcard-img.art{background:linear-gradient(135deg,#2d0a50,#6b21a8);}
+.hero.outdoor,.rcard-img.outdoor{background:linear-gradient(135deg,#012d1a,#065f46);}
+.hero.sports,.rcard-img.sports{background:linear-gradient(135deg,#060f25,#1e3a5f);}
+.hero.film,.rcard-img.film{background:linear-gradient(135deg,#2d1500,#92400e);}
+.hero.networking,.rcard-img.networking{background:linear-gradient(135deg,#050f18,#1a3a4f);}
 .etitle{font-family:'Playfair Display',serif;font-size:clamp(26px,3.5vw,38px);font-weight:700;line-height:1.15;margin-bottom:18px;}
 /* CHIPS */
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;}
@@ -90,17 +97,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);m
 </style>
 </head>
 <body>
-{% set GC={'music':'linear-gradient(135deg,#3d1a00,#7a4309)','food':'linear-gradient(135deg,#5a1a0a,#d45f3c)','tech':'linear-gradient(135deg,#0d1f3d,#2c5282)','art':'linear-gradient(135deg,#2d0a50,#6b21a8)','outdoor':'linear-gradient(135deg,#012d1a,#065f46)','sports':'linear-gradient(135deg,#060f25,#1e3a5f)','film':'linear-gradient(135deg,#2d1500,#92400e)','networking':'linear-gradient(135deg,#050f18,#1a3a4f)'} %}
 {% set GI={'music':'music','food':'utensils','tech':'cpu','art':'palette','outdoor':'mountain','sports':'trophy','film':'film','networking':'briefcase'} %}
 <nav class="nav">
   <a href="/" class="brand">buz<em>zz</em>.</a>
   <a href="/events" class="nav-back"><i data-lucide="arrow-left" style="width:14px;height:14px"></i>Back</a>
   <span class="nav-t">{{ event.title }}</span>
-  <a href="/profile" class="nav-av" data-avatar-bg="{{ me.avatar_bg }}" data-avatar-color="{{ me.avatar_color }}">
+  <a href="/profile" class="nav-av" aria-label="View profile" data-avatar-bg="{{ me.avatar_bg }}" data-avatar-color="{{ me.avatar_color }}">
     <i data-lucide="{{ me.avatar_icon or 'user' }}" style="width:15px;height:15px"></i>
   </a>
 </nav>
-<div class="hero" style="background:{{ GC.get(event.category,'#1a1208') }}">
+<div class="hero {{ event.category }}">
   {% if event.image_url %}<img src="{{ event.image_url }}" alt="{{ event.title }}">{% endif %}
   <i data-lucide="{{ GI.get(event.category,'calendar') }}" class="hero-icon" style="width:110px;height:110px"></i>
   <div class="hero-ov"></div>
@@ -134,14 +140,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);m
     <div class="shead">About this event</div>
     <div class="desc">{{ event.description or 'No description available.' }}</div>
     <div class="shead">Location</div>
-    <div id="dmap"></div>
+    <div id="dmap" data-lat="{{ event.lat or -1.2864 }}" data-lng="{{ event.lng or 36.8172 }}" data-title="{{ event.title|e('html_attr') }}" data-going="{{ 'true' if event.rsvped else 'false' }}" data-eid="{{ event.id }}"></div>
     <div class="map-addr"><i data-lucide="navigation" style="width:12px;height:12px;color:var(--coral)"></i>{{ event.address or event.location_name }}, Kenya</div>
     {% if event.friends_going %}
     <div class="shead">Friends going</div>
     <div class="friends" style="margin-bottom:28px">
       {% for f in event.friends_going %}
       <div class="fchip">
-        <div class="fav" style="background:{{ f.avatar_bg or '#3d1a00' }};color:{{ f.avatar_color or '#e8821a' }}">
+        <div class="fav" data-bg="{{ f.avatar_bg or '#3d1a00' }}" data-color="{{ f.avatar_color or '#e8821a' }}">
           <i data-lucide="{{ f.avatar_icon or 'user' }}" style="width:11px;height:11px"></i>
         </div>
         {{ f.name }}
@@ -153,9 +159,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);m
     <div class="shead">More like this</div>
     <div class="rel-grid">
       {% for r in related %}
-      {% set rc={'music':'linear-gradient(135deg,#3d1a00,#7a4309)','food':'linear-gradient(135deg,#5a1a0a,#d45f3c)','tech':'linear-gradient(135deg,#0d1f3d,#2c5282)','art':'linear-gradient(135deg,#2d0a50,#6b21a8)','outdoor':'linear-gradient(135deg,#012d1a,#065f46)','sports':'linear-gradient(135deg,#060f25,#1e3a5f)','film':'linear-gradient(135deg,#2d1500,#92400e)','networking':'linear-gradient(135deg,#050f18,#1a3a4f)'} %}
       <a class="rcard" href="/events/{{ r.id }}">
-        <div class="rcard-img" style="background:{{ rc.get(r.category,'#1a1208') }}">
+        <div class="rcard-img {{ r.category }}">
           <i data-lucide="{{ GI.get(r.category,'calendar') }}" style="width:26px;height:26px;color:rgba(255,255,255,.22)"></i>
         </div>
         <div class="rcard-body">
@@ -216,12 +221,19 @@ if(navAv){
   navAv.style.background=navAv.dataset.avatarBg;
   navAv.style.color=navAv.dataset.avatarColor;
 }
-const map=L.map('dmap',{zoomControl:true,dragging:true}).setView([{{ event.lat or -1.2864 }},{{ event.lng or 36.8172 }}],15);
+document.querySelectorAll('.fav').forEach(el=>{
+  el.style.background=el.dataset.bg;
+  el.style.color=el.dataset.color;
+});
+const dmap=document.getElementById('dmap');
+const lat=parseFloat(dmap.dataset.lat);
+const lng=parseFloat(dmap.dataset.lng);
+const map=L.map('dmap',{zoomControl:true,dragging:true}).setView([lat,lng],15);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© CARTO',maxZoom:19}).addTo(map);
 const dot=L.divIcon({html:`<div style="width:18px;height:18px;border-radius:50%;background:var(--amber);border:3px solid white;box-shadow:0 2px 7px rgba(0,0,0,.3)"></div>`,className:'',iconSize:[18,18],iconAnchor:[9,9]});
-L.marker([{{ event.lat or -1.2864 }},{{ event.lng or 36.8172 }}],{icon:dot}).addTo(map).bindPopup('{{ event.title|replace("'","\\'")|safe }}').openPopup();
-let going={{ 'true' if event.rsvped else 'false' }};
-const eid={{ event.id }};
+L.marker([lat,lng],{icon:dot}).addTo(map).bindPopup(dmap.dataset.title).openPopup();
+let going=dmap.dataset.going==='true';
+const eid=parseInt(dmap.dataset.eid,10);
 async function toggleRsvp(){
   const action=going?'cancel':'going';
   const r=await fetch(`/api/rsvp/${eid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});
