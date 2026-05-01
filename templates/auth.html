@@ -45,14 +45,12 @@
     padding: 44px 52px;
     position: relative; overflow: hidden;
   }
-
   .deco-panel::before {
     content: '';
     position: absolute; inset: 0;
     background: radial-gradient(ellipse 70% 60% at 20% 80%, rgba(232,130,26,0.2) 0%, transparent 55%);
     pointer-events: none;
   }
-
   .deco-grid {
     position: absolute; inset: 0;
     background-image:
@@ -61,7 +59,6 @@
     background-size: 44px 44px;
     pointer-events: none;
   }
-
   .deco-brand {
     font-family: 'Playfair Display', serif;
     font-size: 26px; font-weight: 900; font-style: italic;
@@ -69,9 +66,7 @@
     position: relative; z-index: 1;
   }
   .deco-brand em { color: var(--amber); font-style: normal; }
-
   .deco-center { position: relative; z-index: 1; }
-
   .deco-quote {
     font-family: 'Playfair Display', serif;
     font-size: clamp(28px, 3.5vw, 44px);
@@ -79,21 +74,15 @@
     color: var(--paper); margin-bottom: 24px;
   }
   .deco-quote em { font-style: italic; color: var(--amber); }
-
   .deco-features { display: flex; flex-direction: column; gap: 16px; }
-
-  .deco-feat {
-    display: flex; align-items: flex-start; gap: 14px;
-  }
+  .deco-feat { display: flex; align-items: flex-start; gap: 14px; }
   .deco-feat-icon {
     width: 38px; height: 38px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .deco-feat-icon.amber { background: rgba(232,130,26,0.2); color: var(--amber2); }
   .deco-feat-icon.sage  { background: rgba(61,90,71,0.4);  color: #7abf8a; }
   .deco-feat-icon.coral { background: rgba(212,95,60,0.2); color: #e89070; }
-
   .deco-feat-title { font-size: 13px; font-weight: 500; color: var(--paper); margin-bottom: 2px; }
   .deco-feat-sub   { font-size: 12px; color: var(--text3); }
 
@@ -103,9 +92,8 @@
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     padding: 52px 64px;
-    position: relative;
+    position: relative; overflow-y: auto;
   }
-
   .form-panel::before {
     content: '';
     position: absolute; inset: 0;
@@ -119,11 +107,11 @@
     );
     pointer-events: none;
   }
-
   .form-box {
     width: 100%; max-width: 420px;
     position: relative; z-index: 1;
     animation: slideUp 0.6s both;
+    padding: 20px 0;
   }
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(24px); }
@@ -144,10 +132,7 @@
     cursor: pointer; background: none; border-top: none;
     border-left: none; border-right: none; font-family: 'DM Sans', sans-serif;
   }
-  .form-tab.active {
-    color: var(--amber);
-    border-bottom-color: var(--amber);
-  }
+  .form-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
   .form-tab:hover:not(.active) { color: var(--text2); }
 
   .form-heading {
@@ -155,40 +140,35 @@
     font-size: 28px; font-weight: 700;
     color: var(--ink); margin-bottom: 6px;
   }
-  .form-sub {
-    font-size: 14px; color: var(--text3); margin-bottom: 28px;
-  }
+  .form-sub { font-size: 14px; color: var(--text3); margin-bottom: 28px; }
 
-  /* Error / success */
+  /* Alert */
   .form-alert {
     display: none; align-items: center; gap: 10px;
     padding: 12px 16px; border-radius: 6px;
     font-size: 13px; margin-bottom: 20px;
   }
-  .form-alert.error  { background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.2); color: var(--error); display: flex; }
-  .form-alert.success{ background: rgba(39,174,96,0.08);  border: 1px solid rgba(39,174,96,0.2);  color: var(--success); display: flex; }
+  .form-alert.error   { background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.2); color: var(--error); display: flex; }
+  .form-alert.success { background: rgba(39,174,96,0.08);  border: 1px solid rgba(39,174,96,0.2);  color: var(--success); display: flex; }
 
-  /* Field */
+  /* Fields */
   .field { margin-bottom: 18px; }
   .field-label {
     display: flex; align-items: center; gap: 6px;
     font-size: 11px; font-weight: 500; color: var(--text2);
-    letter-spacing: 0.1em; text-transform: uppercase;
-    margin-bottom: 8px;
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
   }
   .field-wrap { position: relative; }
   .field-icon {
     position: absolute; left: 13px; top: 50%;
-    transform: translateY(-50%); color: var(--text3);
-    pointer-events: none;
+    transform: translateY(-50%); color: var(--text3); pointer-events: none;
   }
   .field-input {
     width: 100%; padding: 12px 14px 12px 40px;
     background: white; border: 1.5px solid var(--border);
     border-radius: 6px; color: var(--ink);
     font-family: 'DM Sans', sans-serif; font-size: 14px;
-    outline: none; transition: all 0.2s;
-    appearance: none;
+    outline: none; transition: all 0.2s; appearance: none;
   }
   .field-input:focus {
     border-color: var(--amber);
@@ -196,10 +176,7 @@
   }
   .field-input::placeholder { color: var(--text3); }
   .field-input.error { border-color: var(--error); }
-
-  .field-hint {
-    font-size: 11px; color: var(--text3); margin-top: 5px;
-  }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
   /* Password toggle */
   .pw-toggle {
@@ -210,43 +187,93 @@
   }
   .pw-toggle:hover { color: var(--ink); }
 
-  /* Avatar picker */
-  .avatar-section { margin-bottom: 22px; }
-  .avatar-label {
+  /* Strength bar */
+  .pw-strength { margin-top: 6px; }
+  .pw-bar-bg { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .pw-bar-fill { height: 100%; border-radius: 2px; transition: all 0.3s; width: 0%; }
+  .pw-strength-label { font-size: 11px; margin-top: 4px; color: var(--text3); }
+
+  /* ── DICEBEAR AVATAR PICKER ── */
+  .avatar-section {
+    margin-bottom: 22px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .avatar-section-label {
     font-size: 11px; font-weight: 500; color: var(--text2);
     letter-spacing: 0.1em; text-transform: uppercase;
-    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
   }
-  .avatar-grid {
-    display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  .avatar-picker-row {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 14px;
   }
-  .avatar-opt {
-    aspect-ratio: 1;
-    border-radius: 10px; border: 2px solid var(--border);
-    background: white; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; color: var(--text3);
-    position: relative; overflow: hidden;
-  }
-  .avatar-opt:hover {
-    border-color: var(--amber); transform: translateY(-2px);
+  .avatar-preview-wrap {
+    width: 72px; height: 72px; flex-shrink: 0;
+    border-radius: 50%;
+    border: 3px solid var(--amber);
+    overflow: hidden;
+    background: var(--cream);
     box-shadow: 0 4px 12px rgba(232,130,26,0.2);
   }
-  .avatar-opt.selected {
-    border-color: var(--amber); background: rgba(232,130,26,0.06);
-    color: var(--amber);
+  .avatar-preview-wrap img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
   }
-  .avatar-opt.selected::after {
-    content: '';
-    position: absolute; top: 4px; right: 4px;
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--amber);
+  .avatar-picker-actions { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .btn-randomize {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 16px;
+    background: var(--cream); color: var(--text2);
+    border: 1.5px solid var(--border);
+    border-radius: 6px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500;
+    transition: all 0.2s; white-space: nowrap;
   }
+  .btn-randomize:hover {
+    border-color: var(--amber); color: var(--amber);
+    background: rgba(232,130,26,0.05);
+  }
+  .avatar-style-hint { font-size: 11px; color: var(--text3); }
+  .avatar-style-hint strong { color: var(--text2); }
 
-  /* Two columns */
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  /* Style grid */
+  .style-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+    max-height: 130px; overflow-y: auto;
+    padding: 2px;
+  }
+  .style-grid::-webkit-scrollbar { width: 4px; }
+  .style-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* Submit button */
+  .style-opt {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 5px 2px; border-radius: 7px;
+    border: 2px solid transparent;
+    cursor: pointer; transition: all 0.15s;
+    background: var(--cream);
+  }
+  .style-opt:hover { border-color: var(--border); transform: translateY(-1px); }
+  .style-opt.selected {
+    border-color: var(--amber);
+    background: rgba(232,130,26,0.07);
+  }
+  .style-opt img {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: white;
+    display: block;
+  }
+  .style-opt span {
+    font-size: 9px; color: var(--text3); text-align: center;
+    max-width: 46px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+    line-height: 1.2;
+  }
+  .style-opt.selected span { color: var(--amber); font-weight: 500; }
+
+  /* Submit */
   .btn-submit {
     width: 100%; padding: 14px;
     background: var(--amber); color: var(--ink);
@@ -270,30 +297,15 @@
   }
   .form-footer a { color: var(--amber); text-decoration: none; font-weight: 500; }
   .form-footer a:hover { text-decoration: underline; }
-
-  /* Strength bar */
-  .pw-strength { margin-top: 6px; }
-  .pw-bar-bg {
-    height: 3px; background: var(--border);
-    border-radius: 2px; overflow: hidden;
-  }
-  .pw-bar-fill {
-    height: 100%; border-radius: 2px;
-    transition: all 0.3s; width: 0%;
-  }
-  .pw-strength-label {
-    font-size: 11px; margin-top: 4px; color: var(--text3);
-  }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <!-- DECORATIVE LEFT PANEL -->
+  <!-- LEFT PANEL -->
   <div class="deco-panel">
     <div class="deco-grid"></div>
     <a href="/" class="deco-brand">buz<em>zz</em>.</a>
-
     <div class="deco-center">
       <div class="deco-quote">
         Every great<br>story starts with<br>showing <em>up.</em>
@@ -328,7 +340,6 @@
         </div>
       </div>
     </div>
-
     <div style="font-size:12px;color:var(--text3);position:relative;z-index:1">
       Already have a story to tell.
     </div>
@@ -345,19 +356,30 @@
 
       <div id="alert-box" class="form-alert"></div>
 
-      <!-- ═══════════════ SIGNUP FORM ═══════════════ -->
+      <!-- ═══════ SIGNUP ═══════ -->
       {% if mode == 'signup' %}
       <h2 class="form-heading">Join buzzz.</h2>
       <p class="form-sub">Create your profile and start discovering events.</p>
 
-      <!-- Avatar selection -->
+      <!-- DiceBear Avatar Picker -->
       <div class="avatar-section">
-        <div class="avatar-label">
+        <div class="avatar-section-label">
           <i data-lucide="smile" style="width:13px;height:13px"></i>
           Choose your avatar
         </div>
-        <div class="avatar-grid" id="avatar-grid"></div>
-        <input type="hidden" id="selected-avatar" value="music">
+        <div class="avatar-picker-row">
+          <div class="avatar-preview-wrap">
+            <img id="avatar-preview" src="" alt="Your avatar">
+          </div>
+          <div class="avatar-picker-actions">
+            <button type="button" class="btn-randomize" id="btn-randomize">
+              <i data-lucide="refresh-cw" style="width:13px;height:13px"></i>
+              New random look
+            </button>
+            <div class="avatar-style-hint">Style: <strong id="style-name-label">adventurer</strong></div>
+          </div>
+        </div>
+        <div class="style-grid" id="style-grid"></div>
       </div>
 
       <div class="field-row">
@@ -401,8 +423,11 @@
         </div>
         <div class="field-wrap">
           <i data-lucide="lock" class="field-icon" style="width:16px;height:16px"></i>
-          <input type="password" class="field-input" id="s-password" placeholder="At least 6 characters" autocomplete="new-password" oninput="checkStrength(this.value)">
-          <button name="button" class="pw-toggle" type="button" onclick="togglePw('s-password', this)">
+          <input type="password" class="field-input" id="s-password"
+                 placeholder="At least 6 characters"
+                 autocomplete="new-password"
+                 oninput="checkStrength(this.value)">
+          <button type="button" class="pw-toggle" onclick="togglePw('s-password', this)">
             <i data-lucide="eye" style="width:16px;height:16px"></i>
           </button>
         </div>
@@ -412,16 +437,13 @@
         </div>
       </div>
 
-      <button class="btn-submit" onclick="doSignup()">
+      <button class="btn-submit" id="signup-btn" onclick="doSignup()">
         <i data-lucide="arrow-right" style="width:18px;height:18px"></i>
         Create my account
       </button>
+      <div class="form-footer">Already have an account? <a href="/login">Sign in</a></div>
 
-      <div class="form-footer">
-        Already have an account? <a href="/login">Sign in</a>
-      </div>
-
-      <!-- ═══════════════ LOGIN FORM ═══════════════ -->
+      <!-- ═══════ LOGIN ═══════ -->
       {% else %}
       <h2 class="form-heading">Welcome back.</h2>
       <p class="form-sub">Sign in to see what's buzzing near you.</p>
@@ -445,7 +467,7 @@
         <div class="field-wrap">
           <i data-lucide="lock" class="field-icon" style="width:16px;height:16px"></i>
           <input type="password" class="field-input" id="l-password" placeholder="••••••••">
-          <button name="button" class="pw-toggle" type="button" onclick="togglePw('l-password', this)">
+          <button type="button" class="pw-toggle" onclick="togglePw('l-password', this)">
             <i data-lucide="eye" style="width:16px;height:16px"></i>
           </button>
         </div>
@@ -455,10 +477,7 @@
         <i data-lucide="log-in" style="width:18px;height:18px"></i>
         Sign in
       </button>
-
-      <div class="form-footer">
-        New to buzzz? <a href="/signup">Create a free account</a>
-      </div>
+      <div class="form-footer">New to buzzz? <a href="/signup">Create a free account</a></div>
       {% endif %}
 
     </div>
@@ -468,51 +487,88 @@
 <script>
 lucide.createIcons();
 
-// ── AVATAR GRID ──
-const AVATARS = [
-  { id: 'music',    icon: 'music' },
-  { id: 'camera',   icon: 'camera' },
-  { id: 'zap',      icon: 'zap' },
-  { id: 'coffee',   icon: 'coffee' },
-  { id: 'star',     icon: 'star' },
-  { id: 'flame',    icon: 'flame' },
-  { id: 'globe',    icon: 'globe' },
-  { id: 'heart',    icon: 'heart' },
-  { id: 'sunset',   icon: 'sunset' },
-  { id: 'compass',  icon: 'compass' },
-  { id: 'feather',  icon: 'feather' },
-  { id: 'aperture', icon: 'aperture' },
+// ═══════════════════════════════════════════
+// DICEBEAR AVATAR PICKER
+// ═══════════════════════════════════════════
+const POPULAR_STYLES = [
+  'adventurer','avataaars','big-ears','big-smile',
+  'bottts','fun-emoji','lorelei','micah',
+  'notionists','open-peeps','personas','pixel-art'
 ];
 
-const grid = document.getElementById('avatar-grid');
-if (grid) {
-  AVATARS.forEach((av, i) => {
-    const d = document.createElement('div');
-    d.className = 'avatar-opt' + (i === 0 ? ' selected' : '');
-    d.dataset.id = av.id;
-    d.innerHTML = `<i data-lucide="${av.icon}" style="width:20px;height:20px"></i>`;
-    d.onclick = () => {
-      document.querySelectorAll('.avatar-opt').forEach(x => x.classList.remove('selected'));
-      d.classList.add('selected');
-      document.getElementById('selected-avatar').value = av.id;
-    };
-    grid.appendChild(d);
-  });
-  lucide.createIcons();
+let currentSeed  = randomSeed();
+let currentStyle = 'adventurer';
+
+function randomSeed(len = 12) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({length: len}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
-// ── PASSWORD STRENGTH ──
+function dicebearUrl(seed, style) {
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
+}
+
+function updatePreview() {
+  const url = dicebearUrl(currentSeed, currentStyle);
+  const img = document.getElementById('avatar-preview');
+  if (img) img.src = url;
+  const lbl = document.getElementById('style-name-label');
+  if (lbl) lbl.textContent = currentStyle;
+}
+
+function buildStyleGrid() {
+  const grid = document.getElementById('style-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  POPULAR_STYLES.forEach(style => {
+    const el = document.createElement('div');
+    el.className = 'style-opt' + (style === currentStyle ? ' selected' : '');
+    el.title = style;
+    el.innerHTML = `
+      <img src="${dicebearUrl(currentSeed, style)}" alt="${style}" loading="lazy">
+      <span>${style}</span>
+    `;
+    el.addEventListener('click', () => {
+      currentStyle = style;
+      document.querySelectorAll('.style-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      updatePreview();
+    });
+    grid.appendChild(el);
+  });
+}
+
+// Init picker on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('avatar-preview')) {
+    buildStyleGrid();
+    updatePreview();
+
+    document.getElementById('btn-randomize').addEventListener('click', () => {
+      currentSeed = randomSeed();
+      buildStyleGrid();   // refresh thumbnails with new seed
+      updatePreview();
+    });
+  }
+});
+
+// ═══════════════════════════════════════════
+// PASSWORD HELPERS
+// ═══════════════════════════════════════════
 function checkStrength(val) {
   const bar   = document.getElementById('pw-bar');
   const label = document.getElementById('pw-label');
   if (!bar) return;
-  const score = [val.length >= 6, val.length >= 10, /[A-Z]/.test(val), /[0-9]/.test(val), /[^a-zA-Z0-9]/.test(val)].filter(Boolean).length;
+  const score = [
+    val.length >= 6, val.length >= 10,
+    /[A-Z]/.test(val), /[0-9]/.test(val), /[^a-zA-Z0-9]/.test(val)
+  ].filter(Boolean).length;
   const levels = [
-    { pct: 0,   color: 'transparent', text: '' },
-    { pct: 20,  color: '#e74c3c', text: 'Weak' },
-    { pct: 45,  color: '#e8821a', text: 'Fair' },
-    { pct: 70,  color: '#f5a623', text: 'Good' },
-    { pct: 100, color: '#27ae60', text: 'Strong' },
+    { pct:  0, color: 'transparent', text: '' },
+    { pct: 20, color: '#e74c3c',     text: 'Weak' },
+    { pct: 45, color: '#e8821a',     text: 'Fair' },
+    { pct: 70, color: '#f5a623',     text: 'Good' },
+    { pct:100, color: '#27ae60',     text: 'Strong' },
   ];
   const lvl = levels[Math.min(score, 4)];
   bar.style.width      = lvl.pct + '%';
@@ -521,18 +577,19 @@ function checkStrength(val) {
   label.style.color    = lvl.color;
 }
 
-// ── PASSWORD VISIBILITY TOGGLE ──
 function togglePw(id, btn) {
   const inp = document.getElementById(id);
   const isText = inp.type === 'text';
   inp.type = isText ? 'password' : 'text';
   btn.innerHTML = isText
-    ? '<i data-lucide="eye" style="width:16px;height:16px"></i>'
+    ? '<i data-lucide="eye"     style="width:16px;height:16px"></i>'
     : '<i data-lucide="eye-off" style="width:16px;height:16px"></i>';
   lucide.createIcons();
 }
 
-// ── ALERT ──
+// ═══════════════════════════════════════════
+// ALERTS
+// ═══════════════════════════════════════════
 function showAlert(msg, type = 'error') {
   const box = document.getElementById('alert-box');
   box.className = 'form-alert ' + type;
@@ -541,41 +598,59 @@ function showAlert(msg, type = 'error') {
   box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 function clearAlert() {
-  const box = document.getElementById('alert-box');
-  box.className = 'form-alert';
+  document.getElementById('alert-box').className = 'form-alert';
 }
 
-// ── SIGNUP ──
+// ═══════════════════════════════════════════
+// SIGNUP — sends avatar_seed + avatar_style
+// ═══════════════════════════════════════════
 async function doSignup() {
   clearAlert();
-  const btn  = document.querySelector('.btn-submit');
+  const btn = document.getElementById('signup-btn');
   btn.classList.add('loading');
   btn.innerHTML = '<i data-lucide="loader" style="width:18px;height:18px"></i> Creating account...';
   lucide.createIcons();
 
   const body = {
-    name    : document.getElementById('s-name').value,
-    username: document.getElementById('s-username').value,
-    email   : document.getElementById('s-email').value,
-    password: document.getElementById('s-password').value,
-    avatar  : document.getElementById('selected-avatar').value,
+    name        : document.getElementById('s-name').value.trim(),
+    username    : document.getElementById('s-username').value.trim(),
+    email       : document.getElementById('s-email').value.trim(),
+    password    : document.getElementById('s-password').value,
+    avatar_seed : currentSeed,    // ← random seed used for the DiceBear image
+    avatar_style: currentStyle,   // ← style name e.g. "adventurer"
   };
 
-  const res  = await fetch('/api/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-  const data = await res.json();
+  try {
+    const res  = await fetch('/api/signup', {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify(body),
+    });
+    const data = await res.json();
 
-  btn.classList.remove('loading');
-  if (data.error) {
-    showAlert(data.error);
+    btn.classList.remove('loading');
+
+    if (data.error) {
+      showAlert(data.error);
+      btn.innerHTML = '<i data-lucide="arrow-right" style="width:18px;height:18px"></i> Create my account';
+      lucide.createIcons();
+      return;
+    }
+
+    showAlert('Account created! Taking you in…', 'success');
+    setTimeout(() => { window.location = data.redirect; }, 800);
+
+  } catch (err) {
+    btn.classList.remove('loading');
+    showAlert('Something went wrong. Please try again.');
     btn.innerHTML = '<i data-lucide="arrow-right" style="width:18px;height:18px"></i> Create my account';
     lucide.createIcons();
-    return;
   }
-  showAlert('Account created! Taking you in...', 'success');
-  setTimeout(() => window.location = data.redirect, 800);
 }
 
-// ── LOGIN ──
+// ═══════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════
 async function doLogin() {
   clearAlert();
   const btn = document.querySelector('.btn-submit');
@@ -584,26 +659,42 @@ async function doLogin() {
   lucide.createIcons();
 
   const body = {
-    username: document.getElementById('l-username').value,
+    username: document.getElementById('l-username').value.trim(),
     password: document.getElementById('l-password').value,
   };
 
-  const res  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-  const data = await res.json();
+  try {
+    const res  = await fetch('/api/login', {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify(body),
+    });
+    const data = await res.json();
 
-  btn.classList.remove('loading');
-  if (data.error) {
-    showAlert(data.error);
+    btn.classList.remove('loading');
+
+    if (data.error) {
+      showAlert(data.error);
+      btn.innerHTML = '<i data-lucide="log-in" style="width:18px;height:18px"></i> Sign in';
+      lucide.createIcons();
+      return;
+    }
+
+    showAlert('Welcome back!', 'success');
+    setTimeout(() => { window.location = data.redirect; }, 700);
+
+  } catch (err) {
+    btn.classList.remove('loading');
+    showAlert('Something went wrong. Please try again.');
     btn.innerHTML = '<i data-lucide="log-in" style="width:18px;height:18px"></i> Sign in';
     lucide.createIcons();
-    return;
   }
-  showAlert('Welcome back!', 'success');
-  setTimeout(() => window.location = data.redirect, 700);
 }
 
-// Enter key
-document.addEventListener('keydown', e => { if (e.key === 'Enter') { document.querySelector('.btn-submit').click(); } });
+// Enter key shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.querySelector('.btn-submit').click();
+});
 </script>
 </body>
 </html>
