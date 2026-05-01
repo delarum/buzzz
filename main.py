@@ -233,6 +233,72 @@ def get_avatar_styles():
         "popular": POPULAR_STYLES
     })
 
+# standalone routes
+def register_avatar_routes(app, db):
+    """
+    Register avatar routes directly on Flask app.
+    Call this in main.py: register_avatar_routes(app, db)
+    """
+    
+    @app.route('/api/avatar/styles', methods=['GET'])
+    def api_get_styles():
+        return jsonify({
+            "styles": AVATAR_STYLES,
+            "popular": POPULAR_STYLES,
+        })
+    
+    @app.route('/api/avatar/generate', methods=['POST'])
+    def api_generate_avatar():
+        data = request.get_json() or {}
+        style = data.get('style', 'adventurer')
+        
+        if style not in AVATAR_STYLES:
+            style = 'adventurer'
+        
+        seed = generate_random_seed()
+        url = get_avatar_url(seed, style)
+        
+        return jsonify({
+            "seed": seed,
+            "style": style,
+            "url": url,
+        })
+    
+    @app.route('/api/avatar/update', methods=['POST'])
+    def api_update_avatar():
+        """Update the current user's avatar."""
+        if 'user_id' not in session:
+            return jsonify({"error": "Not authenticated"}), 401
+        
+        data = request.get_json() or {}
+        seed = data.get('seed')
+        style = data.get('style', 'adventurer')
+        
+        if not seed:
+            return jsonify({"error": "Seed is required"}), 400
+        
+        if style not in AVATAR_STYLES:
+            style = 'adventurer'
+        
+        avatar_url = get_avatar_url(seed, style)
+        
+        # Update user in database
+        # Adjust this query based on your actual database setup
+        db.execute(
+            """
+            UPDATE users 
+            SET avatar_icon = ?, avatar_color = ?, avatar_bg = ?
+            WHERE id = ?
+            """,
+            (style, seed, avatar_url, session['user_id'])
+        )
+        db.commit()
+        
+        return jsonify({
+            "success": True,
+            "avatar_url": avatar_url,
+        })
+
 @app.route("/logout")
 def logout():
     session.clear()
