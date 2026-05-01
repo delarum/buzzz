@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>buzzz. — {{ user.name }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root {
+    --ink:      #1a1208;
+    --paper:    #faf6ef;
+    --amber:    #e8821a;
+    --amber2:   #f5a623;
+    --cream:    #f0e8d8;
+    --sage:     #3d5a47;
+    --coral:    #d45f3c;
+    --border:   #d4c4a8;
+    --text2:    #6b5a42;
+    --text3:    #9c8870;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100vh; font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); }
+
+  .nav {
+    height: 56px; background: var(--ink);
+    display: flex; align-items: center; padding: 0 32px; gap: 24px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-brand { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; font-style: italic; color: var(--paper); text-decoration: none; margin-right: auto; }
+  .nav-brand em { color: var(--amber); font-style: normal; }
+  .nav-back { color: var(--text3); text-decoration: none; display: flex; align-items: center; gap: 6px; font-size: 13px; transition: color 0.2s; }
+  .nav-back:hover { color: var(--amber); }
+
+  .profile-hero {
+    background: var(--ink); position: relative; overflow: hidden;
+    padding: 56px 32px 40px;
+  }
+  .profile-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 10% 120%, rgba(232,130,26,0.18) 0%, transparent 60%);
+  }
+  .profile-hero::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(232,130,26,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(232,130,26,0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  .profile-hero-inner {
+    max-width: 700px; margin: 0 auto;
+    display: flex; align-items: flex-end; gap: 28px;
+    position: relative; z-index: 1;
+  }
+  .profile-avatar-wrap {
+    width: 100px; height: 100px; border-radius: 50%;
+    border: 4px solid var(--amber);
+    overflow: hidden; flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(232,130,26,0.3);
+    background: var(--cream);
+  }
+  .profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-hero-text { flex: 1; }
+  .profile-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; font-weight: 700; color: var(--paper);
+    margin-bottom: 4px;
+  }
+  .profile-handle { font-size: 14px; color: var(--text3); margin-bottom: 10px; }
+  .profile-bio { font-size: 13px; color: var(--text3); max-width: 400px; line-height: 1.6; }
+  .profile-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; text-decoration: none; transition: all 0.2s;
+  }
+  .btn-amber { background: var(--amber); color: var(--ink); }
+  .btn-amber:hover { background: var(--amber2); }
+  .btn-ghost { background: transparent; color: var(--text3); border: 1.5px solid rgba(255,255,255,0.15); }
+  .btn-ghost:hover { border-color: var(--amber); color: var(--amber); }
+  .btn-pending { background: transparent; color: var(--text3); border: 1.5px solid rgba(255,255,255,0.1); cursor: default; }
+
+  .page-body { max-width: 700px; margin: 0 auto; padding: 40px 32px; }
+  .section-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text3); display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .empty { text-align: center; padding: 40px 0; color: var(--text3); font-size: 14px; }
+
+  #toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--ink); color: var(--paper);
+    padding: 12px 24px; border-radius: 8px; font-size: 13px;
+    transition: transform 0.3s; z-index: 999; pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/friends" class="nav-back">
+    <i data-lucide="arrow-left" style="width:15px;height:15px"></i> Friends
+  </a>
+  <a href="/" class="nav-brand">buz<em>zz</em>.</a>
+</nav>
+
+<div class="profile-hero">
+  <div class="profile-hero-inner">
+    <div class="profile-avatar-wrap">
+      <img src="{{ get_user_avatar(user) }}" alt="{{ user.name }}">
+    </div>
+    <div class="profile-hero-text">
+      <div class="profile-name">{{ user.name }}</div>
+      <div class="profile-handle">@{{ user.username }}</div>
+      {% if user.bio %}<div class="profile-bio">{{ user.bio }}</div>{% endif %}
+      <div class="profile-actions">
+        {% if rel == 'friends' %}
+          <a href="/messages/{{ user.username }}" class="btn btn-amber">
+            <i data-lucide="message-circle" style="width:14px;height:14px"></i> Message
+          </a>
+          <button class="btn btn-ghost" onclick="removeFriend('{{ user.username }}')">
+            <i data-lucide="user-minus" style="width:14px;height:14px"></i> Remove friend
+          </button>
+        {% elif rel == 'sent' %}
+          <span class="btn btn-pending">
+            <i data-lucide="clock" style="width:14px;height:14px"></i> Request sent
+          </span>
+        {% elif rel == 'received' %}
+          <button class="btn btn-amber" onclick="acceptReq('{{ req_id }}')">
+            <i data-lucide="user-check" style="width:14px;height:14px"></i> Accept request
+          </button>
+          <button class="btn btn-ghost" onclick="declineReq('{{ req_id }}')">Decline</button>
+        {% else %}
+          <button class="btn btn-amber" onclick="addFriend('{{ user.username }}', this)">
+            <i data-lucide="user-plus" style="width:14px;height:14px"></i> Add friend
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="section-label">
+    <i data-lucide="calendar" style="width:12px;height:12px"></i>
+    Recent activity
+  </div>
+  <div class="empty">
+    <i data-lucide="calendar" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;display:block"></i>
+    No events attended yet.
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+lucide.createIcons();
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+async function addFriend(username, btn) {
+  btn.disabled = true;
+  const res  = await fetch(`/friends/add/${username}`, { method: 'POST' });
+  const data = await res.json();
+  if (data.ok) {
+    btn.outerHTML = `<span class="btn btn-pending"><i data-lucide="clock" style="width:14px;height:14px"></i> Request sent</span>`;
+    lucide.createIcons();
+    toast('Friend request sent!');
+  } else {
+    toast(data.error || 'Something went wrong');
+    btn.disabled = false;
+  }
+}
+
+async function removeFriend(username) {
+  if (!confirm('Remove this friend?')) return;
+  const res = await fetch(`/friends/remove/${username}`, { method: 'POST' });
+  if ((await res.json()).ok) { toast('Friend removed.'); setTimeout(() => location.reload(), 800); }
+}
+
+async function acceptReq(reqId) {
+  const res = await fetch(`/friends/accept/${reqId}`, { method: 'POST' });
+  if ((await res.json()).ok) { toast('Now friends!'); setTimeout(() => location.reload(), 800); }
+}
+
+async function declineReq(reqId) {
+  const res = await fetch(`/friends/decline/${reqId}`, { method: 'POST' });
+  if ((await res.json()).ok) { toast('Request declined.'); setTimeout(() => location.reload(), 800); }
+}
+</script>
+</body>
+</html>
