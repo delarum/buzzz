@@ -148,8 +148,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--paper);c
            data-q="{{ (e.title+' '+(e.location_name or ''))|lower }}"
            data-date="{{ e.date_time }}" data-price="{{ e.price }}" data-pop="{{ e.attendee_count }}"
            data-lat="{{ e.lat }}" data-lng="{{ e.lng }}"
-           data-title="{{ e.title|e('html_attr') }}"
-           data-loc="{{ (e.location_name or '')[:20]|e('html_attr') }}"
+           data-title="{{ e.title|e }}"
+           data-loc="{{ (e.location_name or '')[:20]|e }}"
            data-is_free="{{ 'true' if e.is_free else 'false' }}"
            data-rsvped="{{ 'true' if e.rsvped else 'false' }}"
            onclick="focusEv(this)">
