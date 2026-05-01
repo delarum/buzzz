@@ -11,6 +11,7 @@ from avatar_utils import (
     POPULAR_STYLES,
 )
 
+
 app = Flask(__name__)
 app.secret_key = "buzzz-secret-key-2026"
 
@@ -158,23 +159,79 @@ def api_signup():
     except sqlite3.IntegrityError:
         return jsonify({"error": "Username or email already taken."}), 400
 
-@app.route("/api/login", methods=["POST"])
-def api_login():
-    d        = request.get_json()
-    username = d.get("username", "").strip().lower()
-    password = d.get("password", "")
-    if not username or not password:
-        return jsonify({"error": "Fill in all fields."}), 400
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    """Handle user registration with avatar selection."""
+    # Get form data
+    username = request.form.get('username')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    
+    # Get avatar data from form (sent by avatar picker)
+    avatar_seed = request.form.get('avatar_seed')
+    avatar_style = request.form.get('avatar_style', 'adventurer')
+    avatar_url = request.form.get('avatar_url')
+    
+    # If no avatar was selected, generate a default one
+    if not avatar_seed:
+        avatar_seed = generate_random_seed()
+        avatar_url = get_avatar_url(avatar_seed, avatar_style)
+    
+    # Validate style
+    if avatar_style not in AVATAR_STYLES:
+        avatar_style = 'adventurer'
+        avatar_url = get_avatar_url(avatar_seed, avatar_style)
+    
+    # Hash password (use your existing password hashing)
+    password_hash = generate_password_hash(password)
+    
+    # Insert user into database
+    # Using your existing schema with avatar_icon, avatar_color, avatar_bg
     with get_db() as db:
-        u = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
-    if not u:
-        return jsonify({"error": "Username not found."}), 401
-    if not check_password_hash(u["password_hash"], password):
-        return jsonify({"error": "Wrong password."}), 401
-    session.update({"user_id": u["id"], "username": u["username"], "name": u["name"]})
-    with get_db() as db:
-        prefs = db.execute("SELECT 1 FROM user_preferences WHERE user_id=?", (u["id"],)).fetchone()
-    return jsonify({"ok": True, "redirect": "/events" if prefs else "/onboarding"})
+        db.execute(
+            """
+            INSERT INTO users (username, email, password_hash, avatar_icon, avatar_color, avatar_bg)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (username, email, password_hash, avatar_style, avatar_seed, avatar_url)
+        )
+    
+    return redirect('/login')
+
+def get_user_avatar(user):
+    """
+    Get avatar URL from user dict/row.
+    Use this when displaying avatars in templates.
+    
+    Usage in template:
+        <img src="{{ get_user_avatar(user) }}" alt="Avatar" />
+    """
+    # If we have the full URL stored
+    if user.get('avatar_bg'):
+        return user['avatar_bg']
+    
+    # Otherwise, generate from seed and style
+    seed = user.get('avatar_color', user.get('username', 'default'))
+    style = user.get('avatar_icon', 'adventurer')
+    
+    return get_avatar_url(seed, style)
+
+
+# Make it available in templates
+app.jinja_env.globals['get_user_avatar'] = get_user_avatar
+
+
+# -------------------------------------------------------------
+# STEP 5: API endpoint for style list (optional)
+# -------------------------------------------------------------
+
+@app.route('/api/avatar/styles', methods=['GET'])
+def get_avatar_styles():
+    """Return available avatar styles."""
+    return jsonify({
+        "styles": AVATAR_STYLES,
+        "popular": POPULAR_STYLES
+    })
 
 @app.route("/logout")
 def logout():
