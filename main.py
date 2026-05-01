@@ -2,7 +2,14 @@ from flask import Flask, render_template, request, session, redirect, url_for, j
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3, os, json, re
 from functools import wraps
-from event_service import get_events, get_event_detail   # FIX 1: was "event_service" (missing s)
+from event_service import get_events, get_event_detail  
+from avatar_utils import (
+    get_avatar_url,
+    generate_random_seed,
+    get_avatar_data_for_db,
+    AVATAR_STYLES,
+    POPULAR_STYLES,
+)
 
 app = Flask(__name__)
 app.secret_key = "buzzz-secret-key-2026"
