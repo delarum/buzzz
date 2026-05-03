@@ -505,6 +505,214 @@ def messages_poll(username):
         "is_me"     : r["from_id"] == uid,
     } for r in rows])
 
+# ══════════════════════════════════════════════════
+# STATS  —  add this block to main.py before logout
+# ══════════════════════════════════════════════════
+
+# Also add this table to init_db() inside the executescript:
+#
+#   CREATE TABLE IF NOT EXISTS rsvps (
+#       id         INTEGER PRIMARY KEY AUTOINCREMENT,
+#       user_id    INTEGER NOT NULL,
+#       event_id   INTEGER NOT NULL,
+#       event_title   TEXT NOT NULL DEFAULT '',
+#       event_category TEXT NOT NULL DEFAULT 'general',
+#       event_date    TEXT NOT NULL DEFAULT '',
+#       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+#       FOREIGN KEY (user_id) REFERENCES users(id),
+#       UNIQUE(user_id, event_id)
+#   );
+
+import json
+from datetime import datetime, timedelta
+
+def _get_stats(db, uid):
+    """Compute all stats for a given user id. Returns a dict."""
+
+    # ── Total attended ──────────────────────────────
+    total = db.execute(
+        "SELECT COUNT(*) FROM rsvps WHERE user_id=?", (uid,)
+    ).fetchone()[0]
+
+    # ── Favourite category ──────────────────────────
+    fav_row = db.execute("""
+        SELECT event_category, COUNT(*) AS cnt
+        FROM rsvps WHERE user_id=?
+        GROUP BY event_category ORDER BY cnt DESC LIMIT 1
+    """, (uid,)).fetchone()
+    fav_category = fav_row["event_category"] if fav_row else "—"
+    fav_count    = fav_row["cnt"]            if fav_row else 0
+
+    # ── This month ──────────────────────────────────
+    month_start = datetime.now().replace(day=1).strftime("%Y-%m-%d")
+    this_month  = db.execute("""
+        SELECT COUNT(*) FROM rsvps
+        WHERE user_id=? AND event_date >= ?
+    """, (uid, month_start)).fetchone()[0]
+
+    # ── Streak (consecutive weeks with ≥1 event) ───
+    rows = db.execute("""
+        SELECT event_date FROM rsvps
+        WHERE user_id=? AND event_date != ''
+        ORDER BY event_date DESC
+    """, (uid,)).fetchall()
+
+    streak = 0
+    if rows:
+        seen_weeks = set()
+        for r in rows:
+            try:
+                d = datetime.strptime(r["event_date"][:10], "%Y-%m-%d")
+                # ISO week key: year-week
+                wk = d.strftime("%G-%V")
+                seen_weeks.add(wk)
+            except Exception:
+                pass
+
+        # Walk back from current week
+        today = datetime.now()
+        check = today
+        while True:
+            wk = check.strftime("%G-%V")
+            if wk in seen_weeks:
+                streak += 1
+                check -= timedelta(weeks=1)
+            else:
+                break
+
+    # ── Category breakdown ──────────────────────────
+    cat_rows = db.execute("""
+        SELECT event_category, COUNT(*) AS cnt
+        FROM rsvps WHERE user_id=?
+        GROUP BY event_category ORDER BY cnt DESC
+    """, (uid,)).fetchall()
+    categories = [{"name": r["event_category"], "count": r["cnt"]} for r in cat_rows]
+
+    # ── Monthly trend (last 6 months) ──────────────
+    monthly = []
+    for i in range(5, -1, -1):
+        d     = datetime.now() - timedelta(days=30 * i)
+        mo    = d.strftime("%Y-%m")
+        label = d.strftime("%b")
+        cnt   = db.execute("""
+            SELECT COUNT(*) FROM rsvps
+            WHERE user_id=? AND event_date LIKE ?
+        """, (uid, f"{mo}%")).fetchone()[0]
+        monthly.append({"label": label, "count": cnt})
+
+    # ── Friends overlap ─────────────────────────────
+    friends = db.execute("""
+        SELECT u.id, u.name, u.username,
+               u.avatar_icon, u.avatar_color, u.avatar_bg
+        FROM users u
+        JOIN friend_requests fr ON (
+            (fr.from_id=? AND fr.to_id=u.id) OR
+            (fr.to_id=?   AND fr.from_id=u.id)
+        )
+        WHERE fr.status='accepted' AND u.id != ?
+    """, (uid, uid, uid)).fetchall()
+
+    friend_overlap = []
+    for f in friends:
+        shared = db.execute("""
+            SELECT COUNT(*) FROM rsvps r1
+            JOIN rsvps r2 ON r1.event_id = r2.event_id
+            WHERE r1.user_id=? AND r2.user_id=?
+        """, (uid, f["id"])).fetchone()[0]
+        friend_overlap.append({
+            "id"       : f["id"],
+            "name"     : f["name"],
+            "username" : f["username"],
+            "avatar_url": get_user_avatar(dict(f)),
+            "shared"   : shared,
+        })
+    friend_overlap.sort(key=lambda x: x["shared"], reverse=True)
+
+    # ── Recent events ───────────────────────────────
+    recent = db.execute("""
+        SELECT * FROM rsvps WHERE user_id=?
+        ORDER BY event_date DESC LIMIT 5
+    """, (uid,)).fetchall()
+
+    return {
+        "total"          : total,
+        "fav_category"   : fav_category,
+        "fav_count"      : fav_count,
+        "this_month"     : this_month,
+        "streak"         : streak,
+        "categories"     : categories,
+        "monthly"        : monthly,
+        "friend_overlap" : friend_overlap,
+        "recent"         : [dict(r) for r in recent],
+    }
+
+
+@app.route("/stats")
+@login_required
+def stats_page():
+    uid  = session["user_id"]
+    me   = current_user()
+    with get_db() as db:
+        stats = _get_stats(db, uid)
+    return render_template("stats.html", me=me, subject=me,
+                           stats=stats, is_own=True,
+                           get_user_avatar=get_user_avatar)
+
+
+@app.route("/stats/<username>")
+@login_required
+def stats_other(username):
+    uid = session["user_id"]
+    me  = current_user()
+    with get_db() as db:
+        subject = db.execute(
+            "SELECT * FROM users WHERE username=?", (username,)
+        ).fetchone()
+        if not subject:
+            return "User not found", 404
+        subject = dict(subject)
+        stats = _get_stats(db, subject["id"])
+    return render_template("stats.html", me=me, subject=subject,
+                           stats=stats, is_own=(subject["id"] == uid),
+                           get_user_avatar=get_user_avatar)
+
+
+# ── RSVP API (updated to also write to rsvps table) ──
+@app.route("/api/rsvp/<int:event_id>", methods=["POST"])
+@login_required
+def api_rsvp(event_id):
+    uid    = session["user_id"]
+    d      = request.get_json() or {}
+    action = d.get("action", "going")   # "going" | "cancel"
+
+    with get_db() as db:
+        # Get event info
+        ev = db.execute(
+            "SELECT * FROM events WHERE id=?", (event_id,)
+        ).fetchone()
+        if not ev:
+            return jsonify({"error": "Event not found"}), 404
+
+        if action == "going":
+            try:
+                db.execute("""
+                    INSERT INTO rsvps
+                      (user_id, event_id, event_title, event_category, event_date)
+                    VALUES (?,?,?,?,?)
+                """, (uid, event_id,
+                      ev["title"],
+                      ev["category"],
+                      ev["date_time"][:10]))
+            except sqlite3.IntegrityError:
+                pass  # already rsvped
+        else:
+            db.execute(
+                "DELETE FROM rsvps WHERE user_id=? AND event_id=?",
+                (uid, event_id)
+            )
+
+    return jsonify({"ok": True})
+
 # ── LOGOUT ────────────────────────────────────────
 @app.route("/logout")
 def logout():
