@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+import json
 import sqlite3, os, re
 from functools import wraps
 from event_service import get_events, get_event_detail
@@ -88,16 +89,18 @@ def current_user():
     if "user_id" not in session:
         return None
     with get_db() as db:
-        return db.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
+        row = db.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
+        return dict(row) if row else None
 
 # ── AVATAR HELPERS ────────────────────────────────
 def get_user_avatar(user):
+    if not isinstance(user, dict):
+        user = dict(user)
     if user.get("avatar_bg"):
         return user["avatar_bg"]
     seed  = user.get("avatar_color") or user.get("username", "default")
     style = user.get("avatar_icon", "adventurer")
     return get_avatar_url(seed, style)
-
 app.jinja_env.globals["get_user_avatar"] = get_user_avatar
 
 # ── ROUTES ────────────────────────────────────────
@@ -184,12 +187,61 @@ def api_login():
         return jsonify({"error": "Invalid username or password."}), 401
 
     session.update({"user_id": u["id"], "username": u["username"], "name": u["name"]})
-    return jsonify({"ok": True, "redirect": "/events"})
+    return jsonify({"ok": True, "redirect": "/onboarding"})
 
 # ── AVATAR STYLES API ─────────────────────────────
 @app.route("/api/avatar/styles")
 def get_avatar_styles():
     return jsonify({"styles": AVATAR_STYLES, "popular": POPULAR_STYLES})
+
+# ── ONBOARDING ────────────────────────────────────
+@app.route("/onboarding")
+@login_required
+def onboarding():
+    return render_template("onboarding.html")
+
+@app.route("/api/preferences", methods=["POST"])
+@login_required
+def save_preferences():
+    d = request.get_json()
+    if not d:
+        return jsonify({"error": "Invalid request."}), 400
+
+    uid = session["user_id"]
+
+    with get_db() as db:
+        # Add prefs columns if they don't exist yet
+        existing = {row[1] for row in db.execute("PRAGMA table_info(users)").fetchall()}
+        migrations = [
+            ("pref_categories", "TEXT DEFAULT ''"),
+            ("pref_distance_km","INTEGER DEFAULT 20"),
+            ("pref_timing",     "TEXT DEFAULT 'either'"),
+            ("pref_price_type", "TEXT DEFAULT 'both'"),
+            ("pref_vibe",       "TEXT DEFAULT 'social'"),
+        ]
+        for col, definition in migrations:
+            if col not in existing:
+                db.execute(f"ALTER TABLE users ADD COLUMN {col} {definition}")
+
+        import json
+        db.execute("""
+            UPDATE users SET
+                pref_categories  = ?,
+                pref_distance_km = ?,
+                pref_timing      = ?,
+                pref_price_type  = ?,
+                pref_vibe        = ?
+            WHERE id = ?
+        """, (
+            json.dumps(d.get("categories", [])),
+            int(d.get("distance_km", 20)),
+            d.get("timing", "either"),
+            d.get("price_type", "both"),
+            d.get("vibe", "social"),
+            uid,
+        ))
+
+    return jsonify({"ok": True, "redirect": "/events"})
 
 # ── EVENTS ────────────────────────────────────────
 @app.route("/events")
@@ -330,6 +382,7 @@ def profile(username):
         user = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
         if not user:
             return "User not found", 404
+        user = dict(user)
         rel = _friend_status(db, uid, user["id"])
         req_row = db.execute("""
             SELECT id FROM friend_requests
@@ -359,6 +412,7 @@ def messages_thread(username):
         other = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
         if not other:
             return "User not found", 404
+        other = dict(other)
         if not _are_friends(db, uid, other["id"]):
             return "You must be friends to message.", 403
 
@@ -368,14 +422,14 @@ def messages_thread(username):
             WHERE from_id=? AND to_id=? AND seen=0
         """, (other["id"], uid))
 
-        thread = db.execute("""
+        thread = [dict(r) for r in db.execute("""
             SELECT m.*, u.username, u.name,
                    u.avatar_icon, u.avatar_color, u.avatar_bg
             FROM messages m
             JOIN users u ON u.id = m.from_id
             WHERE (m.from_id=? AND m.to_id=?) OR (m.from_id=? AND m.to_id=?)
             ORDER BY m.created_at ASC
-        """, (uid, other["id"], other["id"], uid)).fetchall()
+        """, (uid, other["id"], other["id"], uid)).fetchall()]
 
     me = current_user()
     return render_template("messages.html", me=me, other=other,
