@@ -60,7 +60,20 @@ def init_db():
                 FOREIGN KEY (from_id) REFERENCES users(id),
                 FOREIGN KEY (to_id)   REFERENCES users(id)
             );
-        """)
+
+             CREATE TABLE IF NOT EXISTS rsvps (
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             user_id INTEGER NOT NULL,
+             event_id INTEGER NOT NULL,
+             event_title TEXT NOT NULL DEFAULT '',
+             event_category TEXT NOT NULL DEFAULT 'general',
+             event_date TEXT NOT NULL DEFAULT '',
+              
+             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+             FOREIGN KEY (user_id) REFERENCES users(id),
+             UNIQUE(user_id, event_id)
+        );                
+""")
         # Migrate existing users table
         existing = {row[1] for row in db.execute("PRAGMA table_info(users)").fetchall()}
         migrations = [
