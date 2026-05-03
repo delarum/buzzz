@@ -195,8 +195,15 @@ def get_avatar_styles():
 @app.route("/events")
 @login_required
 def events_page():
+    uid = session["user_id"]
     events, source = get_events()
-    return render_template("events.html", events=events, prefs={}, source=source, me={})
+    with get_db() as db:
+        row = db.execute(
+            "SELECT COUNT(*) as cnt FROM messages WHERE to_id=? AND seen=0", (uid,)
+        ).fetchone()
+        unread_total = row["cnt"] if row else 0
+    return render_template("events.html", events=events, prefs={},
+                           source=source, me={}, unread_total=unread_total)
 
 # ══════════════════════════════════════════════════
 # FRIENDS

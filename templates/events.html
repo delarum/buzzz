@@ -113,19 +113,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--paper);c
     {% endfor %}
   </div>
   <div class="nr">
-    <a href="/profile" class="nav-av">
-  <img 
-    src="{{ me.avatar_url or 'https://api.dicebear.com/7.x/adventurer/svg?seed=default' }}" 
-    alt="avatar"
-    style="width:100%;height:100%;border-radius:50%;object-fit:cover;"
-  >
-</a>
+    <a href="/friends" class="nicn" title="Friends">
+      <i data-lucide="users" style="width:14px;height:14px"></i>
+    </a>
     <a href="/onboarding" class="nicn" title="Preferences"><i data-lucide="sliders" style="width:14px;height:14px"></i></a>
     <a href="/logout" class="nicn" title="Sign out"><i data-lucide="log-out" style="width:14px;height:14px"></i></a>
-    <a href="/profile" class="nav-av" aria-label="View profile" data-avatar-bg="{{ me.avatar_bg }}" data-avatar-color="{{ me.avatar_color }}">
-      <i data-lucide="{{ me.avatar_icon or 'user' }}" style="width:15px;height:15px"></i>
-    </a>
-  </div>
+</div>
 </nav>
 <div class="split">
   <div class="feed">
