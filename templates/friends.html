@@ -9,225 +9,72 @@
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <style>
   :root {
-    --ink:      #1a1208;
-    --paper:    #faf6ef;
-    --amber:    #e8821a;
-    --amber2:   #f5a623;
-    --amber-dim:#7a4309;
-    --cream:    #f0e8d8;
-    --sage:     #3d5a47;
-    --coral:    #d45f3c;
-    --border:   #d4c4a8;
-    --text2:    #6b5a42;
-    --text3:    #9c8870;
-    --error:    #c0392b;
-    --success:  #27ae60;
+    --ink:#1a1208;--paper:#faf6ef;--amber:#e8821a;--amber2:#f5a623;
+    --cream:#f0e8d8;--sage:#3d5a47;--coral:#d45f3c;--border:#d4c4a8;
+    --text2:#6b5a42;--text3:#9c8870;--error:#c0392b;--success:#27ae60;
   }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
-    background: var(--paper); color: var(--ink);
-  }
-
-  /* ── NAV ── */
-  .nav {
-    height: 56px;
-    background: var(--ink);
-    display: flex; align-items: center;
-    padding: 0 32px; gap: 32px;
-    position: sticky; top: 0; z-index: 100;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  .nav-brand {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px; font-weight: 900; font-style: italic;
-    color: var(--paper); text-decoration: none; margin-right: auto;
-  }
-  .nav-brand em { color: var(--amber); font-style: normal; }
-  .nav-link {
-    font-size: 13px; color: var(--text3); text-decoration: none;
-    display: flex; align-items: center; gap: 6px; transition: color 0.2s;
-  }
-  .nav-link:hover, .nav-link.active { color: var(--amber); }
-  .nav-badge {
-    background: var(--coral); color: white;
-    font-size: 10px; font-weight: 600;
-    padding: 1px 6px; border-radius: 10px; min-width: 18px;
-    text-align: center;
-  }
-
-  /* ── LAYOUT ── */
-  .page {
-    max-width: 900px; margin: 0 auto;
-    padding: 40px 24px;
-    display: grid; grid-template-columns: 1fr 300px; gap: 32px;
-    align-items: start;
-  }
-
-  /* ── SECTION LABEL ── */
-  .section-label {
-    font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--text3);
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 16px;
-  }
-  .section-label::after {
-    content: ''; flex: 1; height: 1px; background: var(--border);
-  }
-
-  /* ── SEARCH ── */
-  .search-box {
-    background: white; border: 1.5px solid var(--border);
-    border-radius: 10px; overflow: hidden;
-    margin-bottom: 28px;
-    box-shadow: 0 2px 8px rgba(26,18,8,0.05);
-  }
-  .search-inner {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px;
-  }
-  .search-inner input {
-    flex: 1; border: none; outline: none;
-    font-family: 'DM Sans', sans-serif; font-size: 14px;
-    background: transparent; color: var(--ink);
-  }
-  .search-inner input::placeholder { color: var(--text3); }
-  .btn-search {
-    padding: 8px 18px;
-    background: var(--amber); color: var(--ink);
-    border: none; border-radius: 6px; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
-    transition: all 0.2s;
-  }
-  .btn-search:hover { background: var(--amber2); }
-
-  /* ── USER CARD ── */
-  .user-card {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px 16px;
-    background: white; border: 1.5px solid var(--border);
-    border-radius: 10px; margin-bottom: 10px;
-    transition: all 0.2s;
-    box-shadow: 0 1px 4px rgba(26,18,8,0.04);
-  }
-  .user-card:hover {
-    border-color: var(--amber);
-    box-shadow: 0 4px 16px rgba(232,130,26,0.1);
-    transform: translateY(-1px);
-  }
-  .user-avatar {
-    width: 46px; height: 46px; border-radius: 50%;
-    overflow: hidden; flex-shrink: 0;
-    border: 2px solid var(--border);
-    background: var(--cream);
-  }
-  .user-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .user-info { flex: 1; min-width: 0; }
-  .user-name {
-    font-size: 14px; font-weight: 500; color: var(--ink);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .user-handle { font-size: 12px; color: var(--text3); }
-  .user-status {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 11px; padding: 2px 8px; border-radius: 10px;
-    margin-top: 3px;
-  }
-  .user-status.at-event {
-    background: rgba(61,90,71,0.12); color: var(--sage);
-  }
-  .user-actions { display: flex; gap: 8px; flex-shrink: 0; }
-
-  /* ── BUTTONS ── */
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px; border-radius: 6px; font-size: 12px;
-    font-weight: 500; cursor: pointer; border: none;
-    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
-    text-decoration: none;
-  }
-  .btn-amber  { background: var(--amber); color: var(--ink); }
-  .btn-amber:hover { background: var(--amber2); }
-  .btn-ghost  { background: var(--cream); color: var(--text2); border: 1.5px solid var(--border); }
-  .btn-ghost:hover { border-color: var(--amber); color: var(--amber); }
-  .btn-danger { background: rgba(192,57,43,0.08); color: var(--error); border: 1.5px solid rgba(192,57,43,0.2); }
-  .btn-danger:hover { background: rgba(192,57,43,0.15); }
-  .btn-sage   { background: rgba(61,90,71,0.1); color: var(--sage); border: 1.5px solid rgba(61,90,71,0.2); }
-  .btn-sage:hover { background: rgba(61,90,71,0.18); }
-  .btn-pending { background: var(--cream); color: var(--text3); border: 1.5px solid var(--border); cursor: default; }
-
-  /* ── INCOMING REQUESTS ── */
-  .requests-panel {
-    background: white; border: 1.5px solid var(--border);
-    border-radius: 10px; overflow: hidden;
-    box-shadow: 0 2px 8px rgba(26,18,8,0.05);
-  }
-  .requests-header {
-    padding: 14px 16px;
-    background: var(--cream);
-    border-bottom: 1px solid var(--border);
-    font-size: 12px; font-weight: 600; color: var(--text2);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .req-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-  .req-item:last-child { border-bottom: none; }
-  .req-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    overflow: hidden; flex-shrink: 0;
-    border: 2px solid var(--border); background: var(--cream);
-  }
-  .req-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .req-info { flex: 1; min-width: 0; }
-  .req-name { font-size: 13px; font-weight: 500; color: var(--ink); }
-  .req-handle { font-size: 11px; color: var(--text3); }
-  .req-actions { display: flex; gap: 6px; }
-
-  /* ── EMPTY STATE ── */
-  .empty {
-    text-align: center; padding: 48px 24px;
-    color: var(--text3);
-  }
-  .empty-icon {
-    width: 56px; height: 56px; border-radius: 50%;
-    background: var(--cream); border: 1.5px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 16px; color: var(--text3);
-  }
-  .empty p { font-size: 14px; }
-
-  /* ── TOAST ── */
-  #toast {
-    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: var(--ink); color: var(--paper);
-    padding: 12px 24px; border-radius: 8px;
-    font-size: 13px; transition: transform 0.3s;
-    z-index: 999; pointer-events: none;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); }
-
-  /* ── RESULT TAG ── */
-  .rel-tag {
-    font-size: 11px; padding: 3px 10px; border-radius: 10px;
-  }
-  .rel-friends  { background: rgba(61,90,71,0.1);    color: var(--sage); }
-  .rel-sent     { background: rgba(232,130,26,0.1);  color: var(--amber); }
-  .rel-received { background: rgba(212,95,60,0.1);   color: var(--coral); }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);}
+  .nav{height:56px;background:var(--ink);display:flex;align-items:center;padding:0 32px;gap:32px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,0.06);}
+  .nav-brand{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;font-style:italic;color:var(--paper);text-decoration:none;margin-right:auto;}
+  .nav-brand em{color:var(--amber);font-style:normal;}
+  .nav-link{font-size:13px;color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.2s;}
+  .nav-link:hover,.nav-link.active{color:var(--amber);}
+  .nav-badge{background:var(--coral);color:white;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;}
+  .page{max-width:900px;margin:0 auto;padding:40px 24px;display:grid;grid-template-columns:1fr 300px;gap:32px;align-items:start;}
+  .section-label{font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+  .search-box{background:white;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:28px;box-shadow:0 2px 8px rgba(26,18,8,0.05);}
+  .search-inner{display:flex;align-items:center;gap:12px;padding:12px 16px;}
+  .search-inner input{flex:1;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;background:transparent;color:var(--ink);}
+  .search-inner input::placeholder{color:var(--text3);}
+  .btn-search{padding:8px 18px;background:var(--amber);color:var(--ink);border:none;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all 0.2s;}
+  .btn-search:hover{background:var(--amber2);}
+  .user-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:white;border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;transition:all 0.2s;box-shadow:0 1px 4px rgba(26,18,8,0.04);}
+  .user-card:hover{border-color:var(--amber);box-shadow:0 4px 16px rgba(232,130,26,0.1);transform:translateY(-1px);}
+  .user-avatar{width:46px;height:46px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid var(--border);background:var(--cream);}
+  .user-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+  .user-info{flex:1;min-width:0;}
+  .user-name{font-size:14px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .user-handle{font-size:12px;color:var(--text3);}
+  .user-event{font-size:11px;color:var(--sage);display:flex;align-items:center;gap:3px;margin-top:3px;}
+  .user-actions{display:flex;gap:8px;flex-shrink:0;}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;text-decoration:none;}
+  .btn-amber{background:var(--amber);color:var(--ink);}
+  .btn-amber:hover{background:var(--amber2);}
+  .btn-ghost{background:var(--cream);color:var(--text2);border:1.5px solid var(--border);}
+  .btn-ghost:hover{border-color:var(--amber);color:var(--amber);}
+  .btn-danger{background:rgba(192,57,43,0.08);color:var(--error);border:1.5px solid rgba(192,57,43,0.2);}
+  .btn-danger:hover{background:rgba(192,57,43,0.15);}
+  .btn-sage{background:rgba(61,90,71,0.1);color:var(--sage);border:1.5px solid rgba(61,90,71,0.2);}
+  .btn-sage:hover{background:rgba(61,90,71,0.18);}
+  .btn-pending{background:var(--cream);color:var(--text3);border:1.5px solid var(--border);cursor:default;}
+  .requests-panel{background:white;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(26,18,8,0.05);}
+  .requests-header{padding:14px 16px;background:var(--cream);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:8px;}
+  .req-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);}
+  .req-item:last-child{border-bottom:none;}
+  .req-avatar{width:38px;height:38px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid var(--border);background:var(--cream);}
+  .req-avatar img{width:100%;height:100%;object-fit:cover;}
+  .req-info{flex:1;min-width:0;}
+  .req-name{font-size:13px;font-weight:500;color:var(--ink);}
+  .req-handle{font-size:11px;color:var(--text3);}
+  .req-actions{display:flex;gap:6px;}
+  .empty{text-align:center;padding:48px 24px;color:var(--text3);}
+  .empty-icon{width:56px;height:56px;border-radius:50%;background:var(--cream);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--text3);}
+  .empty p{font-size:14px;}
+  #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--paper);padding:12px 24px;border-radius:8px;font-size:13px;transition:transform 0.3s;z-index:999;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+  #toast.show{transform:translateX(-50%) translateY(0);}
+  .rel-tag{font-size:11px;padding:3px 10px;border-radius:10px;}
+  .rel-friends{background:rgba(61,90,71,0.1);color:var(--sage);}
+  .rel-sent{background:rgba(232,130,26,0.1);color:var(--amber);}
+  .rel-received{background:rgba(212,95,60,0.1);color:var(--coral);}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav class="nav">
   <a href="/events" class="nav-brand">buz<em>zz</em>.</a>
-  <a href="/events"  class="nav-link"><i data-lucide="map" style="width:15px;height:15px"></i> Events</a>
+  <a href="/events" class="nav-link"><i data-lucide="map" style="width:15px;height:15px"></i> Events</a>
   <a href="/friends" class="nav-link active"><i data-lucide="users" style="width:15px;height:15px"></i> Friends
     {% if incoming %}<span class="nav-badge">{{ incoming|length }}</span>{% endif %}
   </a>
@@ -235,8 +82,6 @@
 </nav>
 
 <div class="page">
-
-  <!-- LEFT: search + friends list -->
   <div>
 
     <!-- Search -->
@@ -248,8 +93,8 @@
       </div>
     </form>
 
-    <!-- Search results -->
     {% if q %}
+    <!-- Search results -->
     <div class="section-label">
       <i data-lucide="search" style="width:12px;height:12px"></i>
       Results for "{{ q }}"
@@ -269,7 +114,7 @@
             <span class="btn btn-pending rel-tag rel-friends">
               <i data-lucide="check" style="width:12px;height:12px"></i> Friends
             </span>
-            <a href="/messages/{{ u.username }}" title="Send message" class="btn btn-ghost">
+            <a href="/messages/{{ u.username }}" title="send-message" class="btn btn-ghost">
               <i data-lucide="message-circle" style="width:12px;height:12px"></i>
             </a>
           {% elif u.rel == 'sent' %}
@@ -281,7 +126,7 @@
               <i data-lucide="user-plus" style="width:12px;height:12px"></i> Add
             </button>
           {% endif %}
-          <a href="/profile/{{ u.username }}" title="View profile" class="btn btn-ghost">
+          <a href="/profile/{{ u.username }}" title="view-profile" class="btn btn-ghost">
             <i data-lucide="user" style="width:12px;height:12px"></i>
           </a>
         </div>
@@ -295,7 +140,6 @@
     {% endif %}
 
     {% else %}
-
     <!-- Friends list -->
     <div class="section-label">
       <i data-lucide="users" style="width:12px;height:12px"></i>
@@ -311,13 +155,18 @@
         <div class="user-info">
           <div class="user-name">{{ f.name }}</div>
           <div class="user-handle">@{{ f.username }}</div>
+          {% if friend_events and friend_events.get(f.id) %}
+          <div class="user-event">
+            <i data-lucide="calendar" style="width:10px;height:10px"></i>
+            {{ friend_events[f.id].event_title[:30] }}{% if friend_events[f.id].event_title|length > 30 %}…{% endif %}
+          </div>
+          {% endif %}
         </div>
         <div class="user-actions">
           <a href="/messages/{{ f.username }}" class="btn btn-amber" style="position:relative">
             <i data-lucide="message-circle" style="width:13px;height:13px"></i> Chat
             {% if unread.get(f.id) %}
-            <span style="position:absolute;top:-5px;right:-5px;background:var(--coral);
-              color:white;font-size:9px;padding:1px 5px;border-radius:8px">
+            <span style="position:absolute;top:-5px;right:-5px;background:var(--coral);color:white;font-size:9px;padding:1px 5px;border-radius:8px">
               {{ unread[f.id] }}
             </span>
             {% endif %}
@@ -382,7 +231,6 @@
       {% endif %}
     </div>
   </div>
-
 </div>
 
 <div id="toast"></div>
@@ -428,7 +276,7 @@ async function declineReq(reqId, btn) {
 }
 
 async function removeFriend(username, btn) {
-  if (!confirm(`Remove this friend?`)) return;
+  if (!confirm('Remove this friend?')) return;
   const res = await fetch(`/friends/remove/${username}`, { method: 'POST' });
   if ((await res.json()).ok) {
     btn.closest('.user-card')?.remove();

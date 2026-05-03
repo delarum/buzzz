@@ -13,6 +13,9 @@ from avatar_utils import (
 
 app = Flask(__name__)
 app.secret_key = "buzzz-secret-key-2026"
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = False
+app.config["PERMANENT_SESSION_LIFETIME"] = 86400  
 
 DB_PATH = os.path.join("data", "buzzz.db")
 os.makedirs("data", exist_ok=True)
@@ -60,6 +63,25 @@ def init_db():
                 FOREIGN KEY (from_id) REFERENCES users(id),
                 FOREIGN KEY (to_id)   REFERENCES users(id)
             );
+                         
+             CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT DEFAULT 'local',
+    title TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    category TEXT DEFAULT 'general',
+    location_name TEXT DEFAULT '',
+    address TEXT DEFAULT '',
+    lat REAL DEFAULT -1.2864,
+    lng REAL DEFAULT 36.8172,
+    date_time TEXT NOT NULL,
+    price INTEGER DEFAULT 0,
+    is_free INTEGER DEFAULT 0,
+    attendee_count INTEGER DEFAULT 0,
+    image_url TEXT DEFAULT '',
+    event_url TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);            
 
              CREATE TABLE IF NOT EXISTS rsvps (
              id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,6 +129,8 @@ def current_user():
 
 # ── AVATAR HELPERS ────────────────────────────────
 def get_user_avatar(user):
+    if user is None:
+        return get_avatar_url("default", "adventurer")
     if not isinstance(user, dict):
         user = dict(user)
     if user.get("avatar_bg"):
@@ -174,9 +198,10 @@ def api_signup():
                   avatar_style, avatar_seed, avatar_url))
 
             u = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+            session.permanent = True
             session.update({"user_id": u["id"], "username": u["username"], "name": u["name"]})
 
-        return jsonify({"ok": True, "redirect": "/events"})
+        return jsonify({"ok": True, "redirect": "/onboarding"})
     except sqlite3.IntegrityError:
         return jsonify({"error": "Username or email already exists."}), 400
 
@@ -198,9 +223,10 @@ def api_login():
 
     if not u or not check_password_hash(u["password_hash"], password):
         return jsonify({"error": "Invalid username or password."}), 401
-
+    
+    session.permanent = True
     session.update({"user_id": u["id"], "username": u["username"], "name": u["name"]})
-    return jsonify({"ok": True, "redirect": "/onboarding"})
+    return jsonify({"ok": True, "redirect": "/events"})
 
 # ── AVATAR STYLES API ─────────────────────────────
 @app.route("/api/avatar/styles")
@@ -261,14 +287,78 @@ def save_preferences():
 @login_required
 def events_page():
     uid = session["user_id"]
-    events, source = get_events()
     with get_db() as db:
+        me = db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
+        me = dict(me) if me else {}
         row = db.execute(
             "SELECT COUNT(*) as cnt FROM messages WHERE to_id=? AND seen=0", (uid,)
         ).fetchone()
         unread_total = row["cnt"] if row else 0
-    return render_template("events.html", events=events, prefs={},
-                           source=source, me={}, unread_total=unread_total)
+
+    # Load saved preferences
+    cats     = json.loads(me.get("pref_categories") or "[]")
+    distance = int(me.get("pref_distance_km") or 30)
+    timing   = me.get("pref_timing") or "either"
+    price    = me.get("pref_price_type") or "both"
+
+    events, source = get_events(
+        categories=cats if cats else None,
+        distance_km=distance,
+        timing=timing   if timing != "either" else None,
+        price_type=price if price  != "both"   else None,
+    )
+
+    # Add is_free_label and rsvped flag to each event
+    # Add is_free_label, rsvped flag, and friends going to each event
+    with get_db() as db:
+        rsvp_rows = db.execute("SELECT event_id FROM rsvps WHERE user_id=?", (uid,)).fetchall()
+        rsvped_ids = {r["event_id"] for r in rsvp_rows}
+
+        # Get all friends
+        friend_rows = db.execute("""
+            SELECT u.id, u.name, u.avatar_icon, u.avatar_color, u.avatar_bg
+            FROM users u
+            JOIN friend_requests fr ON (
+                (fr.from_id=? AND fr.to_id=u.id) OR
+                (fr.to_id=? AND fr.from_id=u.id)
+            )
+            WHERE fr.status='accepted' AND u.id != ?
+        """, (uid, uid, uid)).fetchall()
+        friends = [dict(f) for f in friend_rows]
+        friend_ids = [f["id"] for f in friends]
+
+        # For each event, find which friends are going
+        friends_at = {}
+        if friend_ids:
+            placeholders = ",".join("?" * len(friend_ids))
+            att_rows = db.execute(f"""
+                SELECT r.event_id, u.id, u.name,
+                       u.avatar_icon, u.avatar_color, u.avatar_bg
+                FROM rsvps r
+                JOIN users u ON u.id = r.user_id
+                WHERE r.user_id IN ({placeholders})
+            """, friend_ids).fetchall()
+            for r in att_rows:
+                friends_at.setdefault(r["event_id"], []).append({
+                    "id": r["id"],
+                    "name": r["name"],
+                    "avatar_url": get_user_avatar(dict(r)),
+                })
+
+    for e in events:
+        e["is_free_label"] = "Free" if e.get("is_free") else f"KES {e.get('price', 0):,}"
+        e["rsvped"] = e.get("id") in rsvped_ids
+        e["friends_going"] = friends_at.get(e.get("id"), [])
+
+    prefs = {
+        "categories": cats,
+        "distance_km": distance,
+        "timing": timing,
+        "price_type": price,
+    }    
+
+    return render_template("events.html", events=events, prefs=prefs,
+                           source=source, me=me, unread_total=unread_total)
 
 # ══════════════════════════════════════════════════
 # FRIENDS
@@ -329,9 +419,21 @@ def friends_page():
             WHERE to_id=? AND seen=0 GROUP BY from_id
         """, (uid,)).fetchall()}
 
+        # Events each friend is attending
+        friend_events = {}
+        for f in friends:
+            ev = db.execute("""
+                SELECT event_title, event_date FROM rsvps
+                WHERE user_id=?
+                ORDER BY event_date DESC LIMIT 1
+            """, (f["id"],)).fetchone()
+            if ev:
+                friend_events[f["id"]] = dict(ev)
+
     return render_template("friends.html",
         me=me, friends=friends, incoming=incoming,
         results=results, q=q, unread=unread,
+        friend_events=friend_events,
         get_user_avatar=get_user_avatar)
 
 @app.route("/friends/add/<username>", methods=["POST"])
@@ -650,9 +752,12 @@ def _get_stats(db, uid):
 @app.route("/stats")
 @login_required
 def stats_page():
-    uid  = session["user_id"]
-    me   = current_user()
+    uid = session["user_id"]
     with get_db() as db:
+        me = db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
+        if not me:
+            return redirect(url_for("logout"))
+        me = dict(me)
         stats = _get_stats(db, uid)
     return render_template("stats.html", me=me, subject=me,
                            stats=stats, is_own=True,
@@ -712,6 +817,60 @@ def api_rsvp(event_id):
             )
 
     return jsonify({"ok": True})
+
+
+# ── EVENT DETAIL ──────────────────────────────────
+@app.route("/events/<int:event_id>")
+@login_required
+def event_detail(event_id):
+    uid = session["user_id"]
+    with get_db() as db:
+        event = db.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone()
+        if not event:
+            return "Event not found", 404
+        event = dict(event)
+
+        # Check if current user has RSVPed
+        rsvp = db.execute(
+            "SELECT 1 FROM rsvps WHERE user_id=? AND event_id=?", (uid, event_id)
+        ).fetchone()
+        event["rsvped"] = rsvp is not None
+
+        # Total RSVPs for this event
+        total = db.execute(
+            "SELECT COUNT(*) as cnt FROM rsvps WHERE event_id=?", (event_id,)
+        ).fetchone()
+        event["total_rsvps"] = total["cnt"] if total else 0
+
+        # Friends going
+        friends_going = db.execute("""
+            SELECT u.name, u.avatar_icon, u.avatar_color, u.avatar_bg
+            FROM rsvps r
+            JOIN users u ON u.id = r.user_id
+            JOIN friend_requests fr ON (
+                (fr.from_id=? AND fr.to_id=u.id) OR
+                (fr.to_id=? AND fr.from_id=u.id)
+            )
+            WHERE r.event_id=? AND fr.status='accepted' AND u.id != ?
+        """, (uid, uid, event_id, uid)).fetchall()
+        event["friends_going"] = [dict(f) for f in friends_going]
+
+        # Related events (same category, not this one)
+        related = db.execute("""
+            SELECT * FROM events
+            WHERE category=? AND id!=?
+            AND date_time >= datetime('now')
+            ORDER BY date_time ASC LIMIT 4
+        """, (event["category"], event_id)).fetchall()
+        related = [dict(r) for r in related]
+
+        # Add is_free_label
+        event["is_free_label"] = "Free" if event["is_free"] else f"KES {event['price']:,}"
+
+        me = db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
+        me = dict(me) if me else {}
+
+    return render_template("event_detail.html", event=event, related=related, me=me)
 
 # ── LOGOUT ────────────────────────────────────────
 @app.route("/logout")

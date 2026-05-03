@@ -140,7 +140,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);m
     <div class="shead">About this event</div>
     <div class="desc">{{ event.description or 'No description available.' }}</div>
     <div class="shead">Location</div>
-    <div id="dmap" data-lat="{{ event.lat or -1.2864 }}" data-lng="{{ event.lng or 36.8172 }}" data-title="{{ event.title|e('html_attr') }}" data-going="{{ 'true' if event.rsvped else 'false' }}" data-eid="{{ event.id }}"></div>
+    <div id="dmap" data-lat="{{ event.lat or -1.2864 }}" data-lng="{{ event.lng or 36.8172 }}" data-title="{{ event.title|e }}" data-going="{{ 'true' if event.rsvped else 'false' }}" data-eid="{{ event.id }}"></div>
     <div class="map-addr"><i data-lucide="navigation" style="width:12px;height:12px;color:var(--coral)"></i>{{ event.address or event.location_name }}, Kenya</div>
     {% if event.friends_going %}
     <div class="shead">Friends going</div>
