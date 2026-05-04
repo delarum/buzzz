@@ -142,6 +142,7 @@ buzzz/
 │
 ├── data/
 │   └── buzzz.db
+|   ├── app.db
 │
 ├── templates/
 │   ├── welcome.html
@@ -153,8 +154,7 @@ buzzz/
 │   └── stats.html
 │
 ├── static/
-│   ├── css/
-│   ├── js/
+│   ├── images/
 │
 ├── main.py
 ├── seed.py
