@@ -80,6 +80,8 @@
       max-width: 300px;
     }
 
+    .ecard { display: block; }
+
     .nsearch {
       width: 100%;
       padding: 7px 12px 7px 32px;
@@ -817,6 +819,8 @@
   </div>
   <script>
     lucide.createIcons();
+    // Ensure all cards visible on load
+    document.querySelectorAll('.ecard').forEach(c => c.style.display = 'block');
     const EVS = Array.from(document.querySelectorAll('.ecard')).map(c => ({
       id: parseInt(c.dataset.id, 10),
       category: c.dataset.cat,
@@ -880,14 +884,18 @@
       if (ev) showPop(ev);
     }
     function filterCat(cat, btn) {
-      document.querySelectorAll('.nc').forEach(b => b.classList.remove('on')); btn.classList.add('on');
-      document.querySelectorAll('.ecard').forEach(c => { c.style.display = cat === 'all' || c.dataset.cat === cat ? 'block' : 'none'; });
-      Object.entries(mkrs).forEach(([id, mk]) => {
-        const ev = EVS.find(e => e.id == id);
-        const show = cat === 'all' || (ev && ev.category === cat);
-        show ? (!map.hasLayer(mk) && map.addLayer(mk)) : (map.hasLayer(mk) && map.removeLayer(mk));
-      });
-    }
+  document.querySelectorAll('.nc').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.ecard').forEach(c => {
+    c.style.display = (cat === 'all' || c.dataset.cat === cat) ? 'block' : 'none';
+  });
+  Object.entries(mkrs).forEach(([id, mk]) => {
+    const ev = EVS.find(e => e.id == id);
+    const show = cat === 'all' || (ev && ev.category === cat);
+    if (show) { if (!map.hasLayer(mk)) map.addLayer(mk); }
+    else       { if (map.hasLayer(mk))  map.removeLayer(mk); }
+  });
+}
     function filterQ(q) {
       const s = q.toLowerCase().trim();
       document.querySelectorAll('.ecard').forEach(c => { c.style.display = !s || c.dataset.q.includes(s) ? 'block' : 'none'; });

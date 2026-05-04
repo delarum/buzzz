@@ -203,6 +203,12 @@ The rsvps table powers event tracking and analytics.
 * Chat uses polling rather than WebSockets.
 
 ---
+## page displays
+![alt text](static/images/image.png)
+
+![alt text](static/images/signin.png)
+
+![alt text](static/images/chat.png)
 
 ## Future Improvements
 

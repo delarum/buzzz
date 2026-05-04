@@ -301,12 +301,7 @@ def events_page():
     timing   = me.get("pref_timing") or "either"
     price    = me.get("pref_price_type") or "both"
 
-    events, source = get_events(
-        categories=cats if cats else None,
-        distance_km=distance,
-        timing=timing   if timing != "either" else None,
-        price_type=price if price  != "both"   else None,
-    )
+    events, source = get_events()
 
     # Add is_free_label and rsvped flag to each event
     # Add is_free_label, rsvped flag, and friends going to each event
