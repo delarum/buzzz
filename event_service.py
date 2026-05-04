@@ -1,7 +1,7 @@
 import os, json, sqlite3, requests
 from datetime import datetime
 
-EVENTBRITE_TOKEN = os.environ.get("EVENTBRITE_TOKEN", "")
+EVENTBRITE_TOKEN = os.environ.get("H6ZD4DCNWIXUQJPEX5JC", "")
 EVENTBRITE_BASE  = "https://www.eventbriteapi.com/v3"
 DB_PATH          = os.path.join("data", "buzzz.db")
 
